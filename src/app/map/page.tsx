@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -165,7 +166,7 @@ export default function MapPage() {
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={mapandanCenter}
-            zoom={10}
+            zoom={18}
             options={{
                 styles: mapStyles,
                 disableDefaultUI: true,
