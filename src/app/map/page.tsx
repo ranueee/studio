@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
-import { Star, Binoculars, HelpCircle, CheckCircle2, Check, Award } from 'lucide-react';
+import { Star, Binoculars, HelpCircle, Check, Award } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
 
@@ -173,6 +173,18 @@ export default function MapPage() {
                 zoomControl: true,
             }}
         >
+            <MarkerF
+                position={mapandanCenter}
+                icon={{
+                    path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z',
+                    fillColor: '#4285F4',
+                    fillOpacity: 1,
+                    strokeColor: '#FFFFFF',
+                    strokeWeight: 2,
+                    scale: 0.7,
+                    anchor: new google.maps.Point(12, 12),
+                }}
+            />
             {pois.map((poi) => {
                 const isVisited = visitedPois.includes(poi.id);
                 return (
@@ -203,7 +215,7 @@ export default function MapPage() {
         
         {/* Fog of War Effect */}
         <div className="absolute inset-0 pointer-events-none" style={{
-            background: 'radial-gradient(circle at center, transparent 0%, transparent 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.95) 60%)'
+            background: 'radial-gradient(circle at center, transparent 0%, transparent 30%, rgba(0,0,0,0.7) 45%, rgba(0,0,0,0.85) 60%)'
         }}></div>
       </div>
 
