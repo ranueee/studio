@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
 import { Star, Binoculars, HelpCircle, CheckCircle2, Check, Award } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
 
 const pois = [
   { id: 'hundred-islands', name: 'Hundred Islands', pos: { lat: 16.1953, lng: 119.9831 }, icon: Star, rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
@@ -154,18 +154,18 @@ export default function MapPage() {
   
   const renderMap = () => {
      if (loadError) {
-        return <div>Error loading maps. Please ensure you have a valid API key.</div>;
+        return <div className="flex items-center justify-center h-full text-center p-4">Error loading maps. Please ensure you have a valid API key in your .env file.</div>;
     }
     
     if (!isLoaded) {
-        return <div>Loading Map...</div>;
+        return <div className="flex items-center justify-center h-full">Loading Map...</div>;
     }
 
     return (
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={mapandanCenter}
-            zoom={12}
+            zoom={10}
             options={{
                 styles: mapStyles,
                 disableDefaultUI: true,
@@ -175,22 +175,20 @@ export default function MapPage() {
             {pois.map((poi) => {
                 const isVisited = visitedPois.includes(poi.id);
                 return (
-                    <div
+                    <MarkerF
                         key={poi.id}
-                        // This is a simple way to place markers; for real apps, use @react-google-maps/api's Marker component
-                        style={{ position: 'absolute', top: `${(poi.pos.lat - mapandanCenter.lat) * 2000 + 50}%`, left: `${(poi.pos.lng - mapandanCenter.lng) * 2000 + 50}%` }}
+                        position={poi.pos}
+                        onClick={() => handlePinClick(poi)}
+                        icon={{
+                            path: isVisited ? 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' : 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+                            fillColor: isVisited ? '#50C878' : '#D2B48C',
+                            fillOpacity: 1,
+                            strokeWeight: 0,
+                            scale: 1.5,
+                            anchor: new google.maps.Point(12, 12),
+                        }}
                     >
-                        <button
-                            className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                            onClick={() => handlePinClick(poi)}
-                            aria-label={`Open details for ${poi.name}`}
-                        >
-                            <div className={`p-2 rounded-full shadow-lg ${isVisited ? 'bg-green-500' : 'bg-accent'}`}>
-                                {isVisited ? <CheckCircle2 className="w-6 h-6 text-white" /> : <poi.icon className="w-6 h-6 text-white" />}
-                            </div>
-                            <span className="text-xs font-bold bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md mt-1 shadow">{poi.name}</span>
-                        </button>
-                    </div>
+                    </MarkerF>
                 );
             })}
         </GoogleMap>
