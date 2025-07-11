@@ -6,18 +6,109 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 import { useApp } from '@/hooks/use-app';
 import { Star, Binoculars, HelpCircle, CheckCircle2, Check, Award } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 
 const pois = [
-  { id: 'hundred-islands', name: 'Hundred Islands National Park', icon: Star, top: '40%', left: '55%', rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
-  { id: 'patar-beach', name: 'Patar Beach', icon: Binoculars, top: '65%', left: '30%', rewards: { xp: 30, eclb: 5 }, challenge: { text: 'Spot 3 native birds', xp: 60, eclb: 15 }, desc: 'Known for its creamy-white sand and clear waters, a beautiful community-managed beach.', image: 'https://placehold.co/600x400.png', hint: 'philippines beach' },
-  { id: 'enchanted-cave', name: 'Enchanted Cave', icon: HelpCircle, top: '50%', left: '20%', rewards: { xp: 40, eclb: 8 }, challenge: { text: 'Photo documentation of cave formations', xp: 80, eclb: 20 }, desc: 'A hidden underground cave with a natural freshwater pool.', image: 'https://placehold.co/600x400.png', hint: 'philippines cave' },
+  { id: 'hundred-islands', name: 'Hundred Islands', pos: { lat: 16.1953, lng: 119.9831 }, icon: Star, rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
+  { id: 'patar-beach', name: 'Patar Beach', pos: { lat: 16.3263, lng: 119.7834 }, icon: Binoculars, rewards: { xp: 30, eclb: 5 }, challenge: { text: 'Spot 3 native birds', xp: 60, eclb: 15 }, desc: 'Known for its creamy-white sand and clear waters, a beautiful community-managed beach.', image: 'https://placehold.co/600x400.png', hint: 'philippines beach' },
+  { id: 'enchanted-cave', name: 'Enchanted Cave', pos: { lat: 16.3683, lng: 119.8210 }, icon: HelpCircle, rewards: { xp: 40, eclb: 8 }, challenge: { text: 'Photo documentation of cave formations', xp: 80, eclb: 20 }, desc: 'A hidden underground cave with a natural freshwater pool.', image: 'https://placehold.co/600x400.png', hint: 'philippines cave' },
 ];
 
 type POI = typeof pois[0];
+
+const mapStyles = [
+    { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+    {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+    },
+    {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+    },
+    {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#263c3f" }],
+    },
+    {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#6b9a76" }],
+    },
+    {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#38414e" }],
+    },
+    {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#212a37" }],
+    },
+    {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#9ca5b3" }],
+    },
+    {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [{ color: "#746855" }],
+    },
+    {
+        featureType: "road.highway",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#1f2835" }],
+    },
+    {
+        featureType: "road.highway",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#f3d19c" }],
+    },
+    {
+        featureType: "transit",
+        elementType: "geometry",
+        stylers: [{ color: "#2f3948" }],
+    },
+    {
+        featureType: "transit.station",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+    },
+    {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#17263c" }],
+    },
+    {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#515c6d" }],
+    },
+    {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#17263c" }],
+    },
+];
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+};
+
+const mapandanCenter = {
+  lat: 16.0203,
+  lng: 120.4478
+};
 
 export default function MapPage() {
   const { visitedPois, addXp, addBalance, addBadge, addVisitedPoi } = useApp();
@@ -25,6 +116,10 @@ export default function MapPage() {
   const [isCheckInModalOpen, setCheckInModalOpen] = useState(false);
   const [isRewardsModalOpen, setRewardsModalOpen] = useState(false);
   const [rewardsGiven, setRewardsGiven] = useState(false);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+  });
 
   const handlePinClick = (poi: POI) => {
     if (visitedPois.includes(poi.id)) return;
@@ -56,29 +151,61 @@ export default function MapPage() {
       setRewardsModalOpen(true);
     }, 500);
   };
+  
+  const renderMap = () => {
+     if (loadError) {
+        return <div>Error loading maps. Please ensure you have a valid API key.</div>;
+    }
+    
+    if (!isLoaded) {
+        return <div>Loading Map...</div>;
+    }
+
+    return (
+        <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={mapandanCenter}
+            zoom={12}
+            options={{
+                styles: mapStyles,
+                disableDefaultUI: true,
+                zoomControl: true,
+            }}
+        >
+            {pois.map((poi) => {
+                const isVisited = visitedPois.includes(poi.id);
+                return (
+                    <div
+                        key={poi.id}
+                        // This is a simple way to place markers; for real apps, use @react-google-maps/api's Marker component
+                        style={{ position: 'absolute', top: `${(poi.pos.lat - mapandanCenter.lat) * 2000 + 50}%`, left: `${(poi.pos.lng - mapandanCenter.lng) * 2000 + 50}%` }}
+                    >
+                        <button
+                            className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
+                            onClick={() => handlePinClick(poi)}
+                            aria-label={`Open details for ${poi.name}`}
+                        >
+                            <div className={`p-2 rounded-full shadow-lg ${isVisited ? 'bg-green-500' : 'bg-accent'}`}>
+                                {isVisited ? <CheckCircle2 className="w-6 h-6 text-white" /> : <poi.icon className="w-6 h-6 text-white" />}
+                            </div>
+                            <span className="text-xs font-bold bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md mt-1 shadow">{poi.name}</span>
+                        </button>
+                    </div>
+                );
+            })}
+        </GoogleMap>
+    );
+  }
 
   return (
     <AppShell>
-      <div className="relative w-full h-full bg-gray-300">
-        <Image src="https://placehold.co/400x800.png" layout="fill" objectFit="cover" alt="Map of Pangasinan" data-ai-hint="map philippines" />
+      <div className="relative w-full h-full bg-gray-900">
+        {renderMap()}
         
-        {pois.map((poi) => {
-          const isVisited = visitedPois.includes(poi.id);
-          return (
-            <button
-              key={poi.id}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-              style={{ top: poi.top, left: poi.left }}
-              onClick={() => handlePinClick(poi)}
-              aria-label={`Open details for ${poi.name}`}
-            >
-              <div className={`p-2 rounded-full shadow-lg ${isVisited ? 'bg-green-500' : 'bg-accent'}`}>
-                {isVisited ? <CheckCircle2 className="w-6 h-6 text-white" /> : <poi.icon className="w-6 h-6 text-white" />}
-              </div>
-              <span className="text-xs font-bold bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md mt-1 shadow">{poi.name}</span>
-            </button>
-          );
-        })}
+        {/* Fog of War Effect */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(circle at center, transparent 0%, transparent 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.95) 60%)'
+        }}></div>
       </div>
 
       {/* Location Details Bottom Sheet */}
