@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
-import { Star, Binoculars, HelpCircle, Check, Award, MapPin, Mountain, Anchor, Waves, Sailboat, Building, History, Sprout, Utensils, Droplets } from 'lucide-react';
+import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, History, Sprout, Utensils, Sailboat, Anchor } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -22,7 +22,7 @@ const pois = [
   { id: 'sungayan-grill', name: 'Sungayan Grill', pos: { lat: 16.3888, lng: 119.9234 }, icon: Utensils, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Try the "inihaw na sungayan"', xp: 40, eclb: 10 }, desc: 'A floating restaurant on the Balingasay River, famous for its fresh seafood and unique dining experience.', image: 'https://placehold.co/600x400.png', hint: 'floating restaurant philippines' },
 
   // Alaminos
-  { id: 'hundred-islands', name: 'Hundred Islands National Park', pos: { lat: 16.1953, lng: 119.9831 }, icon: Star, rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
+  { id: 'hundred-islands', name: 'Hundred Islands National Park', pos: { lat: 16.1953, lng: 120.0381 }, icon: Star, rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
   
   // Anda
   { id: 'tara-falls', name: 'Tara Falls', pos: { lat: 16.2910, lng: 120.0380 }, icon: Droplets, rewards: { xp: 30, eclb: 6 }, challenge: { text: 'Identify local flora', xp: 60, eclb: 15 }, desc: 'A serene waterfall nestled in the forest, perfect for a quiet retreat.', image: 'https://placehold.co/600x400.png', hint: 'serene waterfall' },
@@ -32,7 +32,7 @@ const pois = [
   { id: 'san-fabian-beach', name: 'San Fabian Beach', pos: { lat: 16.1360, lng: 120.4070 }, icon: Waves, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Participate in a beach cleanup', xp: 40, eclb: 10 }, desc: 'A long stretch of grey sand beach popular with locals.', image: 'https://placehold.co/600x400.png', hint: 'grey sand beach' },
   
   // Manaoag
-  { id: 'manaoag-church', name: 'Our Lady of Manaoag Church', pos: { lat: 16.0440, lng: 120.4890 }, icon: History, rewards: { xp: 15, eclb: 2 }, challenge: { text: 'Observe a moment of silence', xp: 30, eclb: 8 }, desc: 'A major Roman Catholic pilgrimage site, home to the image of Our Lady of Manaoag.', image: 'https://placehold.co/600x400.png', hint: 'historic church' },
+  { id: 'manaoag-church', name: 'Our Lady of Manaoag Church', pos: { lat: 16.0445, lng: 120.4896 }, icon: History, rewards: { xp: 15, eclb: 2 }, challenge: { text: 'Observe a moment of silence', xp: 30, eclb: 8 }, desc: 'A major Roman Catholic pilgrimage site, home to the image of Our Lady of Manaoag.', image: 'https://placehold.co/600x400.png', hint: 'historic church' },
 
   // San Nicolas
   { id: 'ampucao-dike', name: 'Ampucao Dike Eco-Park', pos: { lat: 16.0830, lng: 120.7840 }, icon: Sprout, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Plant a tree seedling', xp: 50, eclb: 15 }, desc: 'A man-made dike turned into a park, offering views of the Caraballo Mountains.', image: 'https://placehold.co/600x400.png', hint: 'eco park mountain' },
@@ -41,7 +41,7 @@ const pois = [
   { id: 'tayug-sunflower-maze', name: 'Tayug Sunflower Maze', pos: { lat: 16.0270, lng: 120.7500 }, icon: Sprout, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Learn about sunflower farming', xp: 40, eclb: 10 }, desc: 'A seasonal attraction featuring a maze made of sunflowers.', image: 'https://placehold.co/600x400.png', hint: 'sunflower field' },
 
   // Lingayen
-  { id: 'lingayen-beachfront', name: 'Lingayen Beachfront', pos: { lat: 16.0330, lng: 120.2330 }, icon: Anchor, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Learn about the WWII landings', xp: 40, eclb: 10 }, desc: 'A historic gulf known for its long beach park and as a WWII landing site.', image: 'https://placehold.co/600x400.png', hint: 'calm gulf beach' },
+  { id: 'lingayen-beachfront', name: 'Lingayen Beachfront', pos: { lat: 16.0353, lng: 120.2305 }, icon: Anchor, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Learn about the WWII landings', xp: 40, eclb: 10 }, desc: 'A historic gulf known for its long beach park and as a WWII landing site.', image: 'https://placehold.co/600x400.png', hint: 'calm gulf beach' },
   { id: 'pangasinan-capitol', name: 'Pangasinan Provincial Capitol', pos: { lat: 16.0245, lng: 120.2315 }, icon: Building, rewards: { xp: 10, eclb: 1 }, challenge: { text: 'Appreciate the neo-classical architecture', xp: 20, eclb: 5 }, desc: 'An impressive government building and a historical landmark in Lingayen.', image: 'https://placehold.co/600x400.png', hint: 'government building' },
 
   // Dasol
@@ -100,8 +100,8 @@ export default function MapPage() {
   const [isRewardsModalOpen, setRewardsModalOpen] = useState(false);
   const [rewardsGiven, setRewardsGiven] = useState(false);
   const [viewState, setViewState] = useState({
-    longitude: 120.3,
-    latitude: 16.2,
+    longitude: mapandanCenter.lng,
+    latitude: mapandanCenter.lat,
     zoom: 9
   });
 
@@ -156,11 +156,11 @@ export default function MapPage() {
 
     return (
       <Map
-        {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        initialViewState={viewState}
         style={{width: '100%', height: '100%'}}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle="mapbox://styles/mapbox/outdoors-v12"
         mapboxAccessToken={MAPBOX_TOKEN}
+        interactive={false}
       >
         <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
           <UserLocationMarker />
@@ -192,7 +192,7 @@ export default function MapPage() {
     <AppShell>
       <div className="relative w-full h-full bg-black">
         {renderMap()}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.9)_50%,rgba(0,0,0,1)_80%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,1)_80%)]" />
       </div>
 
       {/* Location Details Bottom Sheet */}
@@ -269,3 +269,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
