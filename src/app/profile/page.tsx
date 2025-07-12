@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 
 // NOTE: Replace with your actual deployed $ECLB token contract address
-const ECLB_TOKEN_CONTRACT_ADDRESS = '0xYOUR_CONTRACT_ADDRESS_HERE';
+const ECLB_TOKEN_CONTRACT_ADDRESS = '0x21C6305c79e63FB306BFbfD1f35bda2FB9f9560B';
 
 // Minimal ABI to get the token balance
 const erc20Abi = [
