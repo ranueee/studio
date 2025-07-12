@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -35,7 +35,7 @@ type Album = {
 
 export default function CommunityPage() {
     const { posts, addPost, deletePost } = useApp();
-    const [loading, setLoading] = useState(false); // Can likely be false now
+    const [loading, setLoading] = useState(false);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
@@ -46,7 +46,7 @@ export default function CommunityPage() {
     const [newPostVisibility, setNewPostVisibility] = useState<'Public' | 'Private'>('Public');
     const [newPostMedia, setNewPostMedia] = useState<{type: 'image' | 'video', url: string, file: File} | null>(null);
     const [isPosting, setIsPosting] = useState(false);
-    const [albumSelectionMode, setAlbumSelectionMode] = useState<'existing' | 'new' | null>(null);
+    const [albumSelectionMode, setAlbumSelectionMode] = useState<'existing' | 'new' | null>('new');
     const [newAlbumName, setNewAlbumName] = useState('');
     const [selectedAlbum, setSelectedAlbum] = useState('');
 
@@ -93,7 +93,7 @@ export default function CommunityPage() {
         setNewPostVisibility('Public');
         setNewPostMedia(null);
         setIsPosting(false);
-        setAlbumSelectionMode(null);
+        setAlbumSelectionMode('new');
         setNewAlbumName('');
         setSelectedAlbum('');
         setCreateModalOpen(false);
@@ -106,20 +106,21 @@ export default function CommunityPage() {
         }
 
         let finalAlbumName = '';
-        if (newPostMedia) {
-            if (albumSelectionMode === 'new') {
-                if (!newAlbumName.trim()) {
-                     toast({ variant: 'destructive', title: 'Missing Album Name', description: 'Please enter a name for your new album.' });
-                     return;
-                }
-                finalAlbumName = newAlbumName.trim();
-            } else if (albumSelectionMode === 'existing') {
-                 if (!selectedAlbum) {
-                     toast({ variant: 'destructive', title: 'Missing Album', description: 'Please select an existing album.' });
-                     return;
-                }
-                finalAlbumName = selectedAlbum;
+        if (albumSelectionMode === 'new') {
+            if (!newAlbumName.trim()) {
+                 toast({ variant: 'destructive', title: 'Missing Album Name', description: 'Please enter a name for your new album.' });
+                 return;
             }
+            finalAlbumName = newAlbumName.trim();
+        } else if (albumSelectionMode === 'existing') {
+             if (!selectedAlbum) {
+                 toast({ variant: 'destructive', title: 'Missing Album', description: 'Please select an existing album.' });
+                 return;
+            }
+            finalAlbumName = selectedAlbum;
+        } else {
+            toast({ variant: 'destructive', title: 'Album Not Selected', description: 'Please choose to create a new album or add to an existing one.' });
+            return;
         }
         
         setIsPosting(true);
@@ -140,7 +141,7 @@ export default function CommunityPage() {
             locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
-            albumName: finalAlbumName || undefined,
+            albumName: finalAlbumName,
             likes: 0,
             comments: [],
             ...mediaData,
@@ -275,42 +276,40 @@ export default function CommunityPage() {
                                 />
                             </div>
 
-                            {newPostMedia && (
-                                <div className="space-y-4 p-4 border rounded-lg">
-                                    <Label>Album</Label>
-                                    <RadioGroup value={albumSelectionMode || ''} onValueChange={(value) => setAlbumSelectionMode(value as any)} className="flex pt-2 gap-4">
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="existing" id="r-existing" />
-                                            <Label htmlFor="r-existing">Add to Existing</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="new" id="r-new" />
-                                            <Label htmlFor="r-new">Create New</Label>
-                                        </div>
-                                    </RadioGroup>
+                            <div className="space-y-4 p-4 border rounded-lg">
+                                <Label>Album</Label>
+                                <RadioGroup value={albumSelectionMode || ''} onValueChange={(value) => setAlbumSelectionMode(value as any)} className="flex pt-2 gap-4">
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="new" id="r-new" />
+                                        <Label htmlFor="r-new">Create New</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="existing" id="r-existing" />
+                                        <Label htmlFor="r-existing">Add to Existing</Label>
+                                    </div>
+                                </RadioGroup>
 
-                                    {albumSelectionMode === 'new' && (
-                                        <Input 
-                                            placeholder="Enter new album name..."
-                                            value={newAlbumName}
-                                            onChange={(e) => setNewAlbumName(e.target.value)}
-                                        />
-                                    )}
+                                {albumSelectionMode === 'new' && (
+                                    <Input 
+                                        placeholder="Enter new album name..."
+                                        value={newAlbumName}
+                                        onChange={(e) => setNewAlbumName(e.target.value)}
+                                    />
+                                )}
 
-                                    {albumSelectionMode === 'existing' && (
-                                        <Select onValueChange={setSelectedAlbum} value={selectedAlbum} disabled={existingAlbumNames.length === 0}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder={existingAlbumNames.length === 0 ? "No albums yet" : "Select an album"} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {existingAlbumNames.map(name => (
-                                                    <SelectItem key={name} value={name}>{name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-                                </div>
-                            )}
+                                {albumSelectionMode === 'existing' && (
+                                    <Select onValueChange={setSelectedAlbum} value={selectedAlbum} disabled={existingAlbumNames.length === 0}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={existingAlbumNames.length === 0 ? "No albums yet" : "Select an album"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {existingAlbumNames.map(name => (
+                                                <SelectItem key={name} value={name}>{name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
                             
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -346,3 +345,5 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
+
+    
