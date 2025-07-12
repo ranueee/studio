@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { MapPin, ImagePlus, Globe, Lock } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 let initialPosts: any[] = [
@@ -113,12 +113,13 @@ export default function CommunityPage() {
     const [newPostVisibility, setNewPostVisibility] = useState<'Public' | 'Private'>('Public');
     const [newPostMedia, setNewPostMedia] = useState<{type: 'image' | 'video', url: string, file: File} | null>(null);
     const [isPosting, setIsPosting] = useState(false);
-    const [albumNameInput, setAlbumNameInput] = useState('');
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [isAlbumPopoverOpen, setAlbumPopoverOpen] = useState(false);
+    const [albumSelectionMode, setAlbumSelectionMode] = useState<'existing' | 'new' | null>(null);
+    const [newAlbumName, setNewAlbumName] = useState('');
+    const [selectedAlbum, setSelectedAlbum] = useState('');
 
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    
     const existingAlbumNames = [...new Set(initialPosts.filter(p => p.albumName).map(p => p.albumName))];
-    const filteredAlbums = existingAlbumNames.filter(name => name.toLowerCase().includes(albumNameInput.toLowerCase()));
 
     const processPostsIntoAlbums = () => {
       setLoading(true);
@@ -168,7 +169,9 @@ export default function CommunityPage() {
         setNewPostVisibility('Public');
         setNewPostMedia(null);
         setIsPosting(false);
-        setAlbumNameInput('');
+        setAlbumSelectionMode(null);
+        setNewAlbumName('');
+        setSelectedAlbum('');
         setCreateModalOpen(false);
     };
 
@@ -178,6 +181,19 @@ export default function CommunityPage() {
             return;
         }
 
+        let finalAlbumName = '';
+        if (newPostMedia) {
+            if (albumSelectionMode === 'new') {
+                if (!newAlbumName.trim()) {
+                     toast({ variant: 'destructive', title: 'Missing Album Name', description: 'Please enter a name for your new album.' });
+                     return;
+                }
+                finalAlbumName = newAlbumName.trim();
+            } else if (albumSelectionMode === 'existing') {
+                finalAlbumName = selectedAlbum;
+            }
+        }
+        
         setIsPosting(true);
         
         let mediaData: {image?: string, video?: string, imageHint?: string} = {};
@@ -196,12 +212,9 @@ export default function CommunityPage() {
             locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
+            albumName: finalAlbumName || undefined,
             ...mediaData,
         };
-
-        if (newPostMedia && albumNameInput.trim()) {
-            newPost.albumName = albumNameInput.trim();
-        }
         
         initialPosts.unshift(newPost);
         processPostsIntoAlbums();
@@ -217,11 +230,6 @@ export default function CommunityPage() {
             const type = file.type.startsWith('image/') ? 'image' : 'video';
             setNewPostMedia({ type, url, file });
         }
-    };
-    
-    const handleAlbumSelect = (name: string) => {
-        setAlbumNameInput(name);
-        setAlbumPopoverOpen(false);
     };
 
     return (
@@ -338,36 +346,40 @@ export default function CommunityPage() {
                         </div>
 
                         {newPostMedia && (
-                             <Popover open={isAlbumPopoverOpen} onOpenChange={setAlbumPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <div className="relative">
-                                         <PlusCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Add to album (optional)"
-                                            value={albumNameInput}
-                                            onChange={(e) => setAlbumNameInput(e.target.value)}
-                                            onFocus={() => setAlbumPopoverOpen(true)}
-                                            className="pl-9"
-                                        />
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Album (Optional)</Label>
+                                    <div className="flex gap-2">
+                                        <Button variant={albumSelectionMode === 'new' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('new')} className="flex-1">
+                                            Create New
+                                        </Button>
+                                        <Button variant={albumSelectionMode === 'existing' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('existing')} className="flex-1" disabled={existingAlbumNames.length === 0}>
+                                            Use Existing
+                                        </Button>
                                     </div>
-                                </PopoverTrigger>
-                                {filteredAlbums.length > 0 && (
-                                     <PopoverContent className="p-1 w-[--radix-popover-trigger-width]">
-                                        <div className="space-y-1">
-                                        {filteredAlbums.map(name => (
-                                            <Button
-                                                key={name}
-                                                variant="ghost"
-                                                className="w-full justify-start font-normal"
-                                                onClick={() => handleAlbumSelect(name)}
-                                            >
-                                                {name}
-                                            </Button>
-                                        ))}
-                                        </div>
-                                    </PopoverContent>
+                                </div>
+
+                                {albumSelectionMode === 'new' && (
+                                     <Input 
+                                        placeholder="Enter new album name..."
+                                        value={newAlbumName}
+                                        onChange={(e) => setNewAlbumName(e.target.value)}
+                                    />
                                 )}
-                            </Popover>
+
+                                {albumSelectionMode === 'existing' && (
+                                     <Select onValueChange={setSelectedAlbum} value={selectedAlbum}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select an existing album" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {existingAlbumNames.map(name => (
+                                                <SelectItem key={name} value={name}>{name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
                         )}
                          
                         <div className="flex items-center justify-between">
