@@ -19,6 +19,7 @@ import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2,
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from '@/components/qr-code';
+import { cn } from '@/lib/utils';
 
 
 const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603'; // Your $ECLB token
