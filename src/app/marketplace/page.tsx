@@ -39,6 +39,9 @@ export default function MarketplacePage() {
       try {
         const fetchedItems = await fetchItems();
         
+        // Set initial items to show placeholders while images generate
+        setItems(fetchedItems);
+
         const imagePromises = fetchedItems.map(item => 
             generateImage({ prompt: item.hint }).catch(e => {
                 console.error(`Failed to generate image for ${item.title}`, e);
@@ -55,6 +58,9 @@ export default function MarketplacePage() {
         setItems(updatedItems);
       } catch (error) {
         console.error(error);
+        // In case of error, still show items with placeholders
+        const fetchedItems = await fetchItems().catch(() => []);
+        setItems(fetchedItems);
       } finally {
         setLoading(false);
       }
@@ -63,26 +69,32 @@ export default function MarketplacePage() {
     loadItemsAndImages();
   }, []);
 
+  const displayItems = loading && items.length === 0 ? Array.from({ length: 4 }).map((_, i) => ({ id: i })) : items;
+
   return (
     <AppShell>
       <div className="p-4">
         <h1 className="text-3xl font-bold mb-4">Marketplace</h1>
         <p className="text-muted-foreground mb-6">Redeem your $ECLB for local products and experiences!</p>
         <div className="grid grid-cols-2 gap-4">
-          {(loading ? Array.from({ length: 4 }) : items).map((item: Item | undefined, index) => (
+          {displayItems.map((item: Partial<Item> & { id: any }, index) => (
             <div key={item?.id ?? index}>
-             {item ? (
+             {item.title ? (
                 <Link href={`/marketplace/redeem/${item.id}`}>
                   <Card className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-shadow">
                     <CardHeader className="p-0">
-                      <Image 
-                        src={item.generatedImage || item.image} 
-                        alt={item.title} 
-                        data-ai-hint={item.hint} 
-                        width={300} 
-                        height={300} 
-                        className="w-full h-32 object-cover" 
-                      />
+                      {item.generatedImage ? (
+                        <Image 
+                          src={item.generatedImage} 
+                          alt={item.title!} 
+                          data-ai-hint={item.hint} 
+                          width={300} 
+                          height={300} 
+                          className="w-full h-32 object-cover" 
+                        />
+                      ) : (
+                        <Skeleton className="w-full h-32" />
+                      )}
                     </CardHeader>
                     <CardContent className="p-3 flex-1">
                       <h3 className="font-semibold text-sm leading-tight">{item.title}</h3>
