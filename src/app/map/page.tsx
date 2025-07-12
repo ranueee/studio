@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
-import { Star, Binoculars, HelpCircle, Check, Award, MapPin as MapPinIcon, Mountain, Anchor, Waves, Sailboat, Building, History, Sprout, Utensils } from 'lucide-react';
+import { Star, Binoculars, HelpCircle, Check, Award, MapPin, Mountain, Anchor, Waves, Sailboat, Building, History, Sprout, Utensils } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -69,6 +69,20 @@ const mapandanCenter = {
   lat: 16.0203,
   lng: 120.4478
 };
+
+const UserLocationMarker = () => (
+  <div className="relative">
+      <svg width="48" height="58" viewBox="0 0 48 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 58C24 58 48 38.6667 48 24C48 10.7452 37.2548 0 24 0C10.7452 0 0 10.7452 0 24C0 38.6667 24 58 24 58Z" fill="#FBBF24"/>
+          <circle cx="24" cy="24" r="16" fill="#34D399"/>
+          <path d="M24 16C26.2091 16 28 17.7909 28 20C28 22.2091 26.2091 24 24 24C21.7909 24 20 22.2091 20 20C20 17.7909 21.7909 16 24 16ZM24 26C30 26 30 30 30 30V32H18V30C18 30 18 26 24 26Z" fill="white"/>
+      </svg>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center w-32">
+          {/* Text can be added here if needed, but the prompt shows text outside the marker */}
+      </div>
+  </div>
+);
+
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -138,15 +152,14 @@ export default function MapPage() {
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
         style={{width: '100%', height: '100%'}}
-        mapStyle="mapbox://styles/mapbox/streets-v12"
+        mapStyle="mapbox://styles/mapbox/dark-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
-          <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white" />
+          <UserLocationMarker />
         </Marker>
         {pois.map((poi) => {
           const isVisited = visitedPois.includes(poi.id);
-          const IconComponent = poi.icon || MapPinIcon;
           return (
             <Marker
               key={poi.id}
@@ -159,7 +172,7 @@ export default function MapPage() {
               style={{ cursor: isVisited ? 'default' : 'pointer' }}
             >
                 <div className="relative">
-                    <IconComponent className={`w-8 h-8 drop-shadow-lg ${isVisited ? 'text-green-400' : 'text-yellow-500'}`} />
+                    <MapPin className={`w-8 h-8 drop-shadow-lg ${isVisited ? 'text-gray-600' : 'text-gray-400'}`} />
                 </div>
             </Marker>
           );
@@ -170,9 +183,9 @@ export default function MapPage() {
 
   return (
     <AppShell>
-      <div className="relative w-full h-full bg-gray-900">
+      <div className="relative w-full h-full bg-black">
         {renderMap()}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.2)_40%,rgba(0,0,0,0.95)_100%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_30%,rgba(0,0,0,1)_80%)]" />
       </div>
 
       {/* Location Details Bottom Sheet */}
