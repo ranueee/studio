@@ -35,8 +35,7 @@ type Album = {
 
 export default function CommunityPage() {
     const { posts, addPost, deletePost } = useApp();
-    const [albums, setAlbums] = useState<Album[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Can likely be false now
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
@@ -53,42 +52,31 @@ export default function CommunityPage() {
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     
-    const [existingAlbumNames, setExistingAlbumNames] = useState<string[]>([]);
+    // Derive albums directly from posts state for automatic updates
+    const albumsByName: { [key: string]: Post[] } = {};
+    posts.forEach(post => {
+        if (post.albumName) {
+            if (!albumsByName[post.albumName]) {
+                albumsByName[post.albumName] = [];
+            }
+            albumsByName[post.albumName].push(post);
+        }
+    });
 
-    const processPostsIntoAlbums = () => {
-      setLoading(true);
-      const albumsByName: { [key: string]: Post[] } = {};
-      
-      posts.forEach(post => {
-          if (post.albumName) {
-              if (!albumsByName[post.albumName]) {
-                  albumsByName[post.albumName] = [];
-              }
-              albumsByName[post.albumName].push(post);
-          }
-      });
-      
-      const createdAlbums = Object.entries(albumsByName).map(([albumName, posts]) => {
-          const sortedPosts = posts.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-          const coverPost = sortedPosts[0];
-          return {
-              albumId: albumName.toLowerCase().replace(/\s+/g, '-'),
-              albumName: albumName,
-              coverImage: coverPost.image || 'https://placehold.co/600x400.png',
-              coverImageHint: coverPost.imageHint || 'community album cover',
-              postCount: posts.length,
-          };
-      });
+    const albums: Album[] = Object.entries(albumsByName).map(([albumName, albumPosts]) => {
+        const sortedPosts = albumPosts.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+        const coverPost = sortedPosts[0];
+        return {
+            albumId: albumName.toLowerCase().replace(/\s+/g, '-'),
+            albumName: albumName,
+            coverImage: coverPost.image || 'https://placehold.co/600x400.png',
+            coverImageHint: coverPost.imageHint || 'community album cover',
+            postCount: albumPosts.length,
+        };
+    }).sort((a, b) => a.albumName.localeCompare(b.albumName));
 
-      setAlbums(createdAlbums.sort((a, b) => a.albumName.localeCompare(b.albumName)));
-      setExistingAlbumNames([...new Set(posts.filter(p => p.albumName).map(p => p.albumName!))]);
-      setLoading(false);
-    };
+    const existingAlbumNames: string[] = [...new Set(posts.filter(p => p.albumName).map(p => p.albumName!))];
 
-    useEffect(() => {
-        processPostsIntoAlbums();
-    }, [posts]);
-    
     const handleDeleteAlbum = (albumNameToDelete: string) => {
         const postsToDelete = posts.filter(p => p.albumName === albumNameToDelete);
         postsToDelete.forEach(p => deletePost(p.id));
