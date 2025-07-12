@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useApp } from '@/hooks/use-app';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send, Share2, Trash2, Edit, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send, Share2, Trash2, Edit, PlusCircle, Copy } from 'lucide-react';
 import type { Post, Comment, Album } from '@/contexts/app-context';
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -36,7 +36,13 @@ const PostCard = ({ post, onLike, onComment }: { post: Post, onLike: (postId: st
     };
 
     const handleShare = (platform: string) => {
-        toast({ title: 'Shared!', description: `Your post has been shared to ${platform}.` });
+        if (platform === 'copy') {
+            const postUrl = `${window.location.origin}/community/post/${post.id}`;
+            navigator.clipboard.writeText(postUrl);
+            toast({ title: 'Link Copied!', description: 'Post link copied to clipboard.' });
+        } else {
+            toast({ title: 'Shared!', description: `Your post has been shared to ${platform}.` });
+        }
         setShareOpen(false);
     };
 
@@ -142,6 +148,9 @@ const PostCard = ({ post, onLike, onComment }: { post: Post, onLike: (postId: st
                         <Button variant="outline" onClick={() => handleShare('Twitter')}>Twitter</Button>
                         <Button variant="outline" onClick={() => handleShare('WhatsApp')}>WhatsApp</Button>
                         <Button variant="outline" onClick={() => handleShare('Instagram')}>Instagram</Button>
+                        <Button variant="outline" className="col-span-2" onClick={() => handleShare('copy')}>
+                           <Copy className="mr-2 h-4 w-4" /> Copy Link
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
