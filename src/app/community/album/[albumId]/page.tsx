@@ -24,11 +24,11 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} x
 
 // In a real app, this data would be fetched from a database
 let pois = [
-  { id: 'hundred-islands', name: 'Hundred Islands' },
-  { id: 'patar-beach', name: 'Patar Beach' },
-  { id: 'enchanted-cave', name: 'Enchanted Cave' },
-  { id: 'bolinao-falls', name: 'Bolinao Falls' },
-  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse' },
+  { id: 'hundred-islands', name: 'Hundred Islands', isAlbum: true },
+  { id: 'patar-beach', name: 'Patar Beach', isAlbum: true },
+  { id: 'enchanted-cave', name: 'Enchanted Cave', isAlbum: true },
+  { id: 'bolinao-falls', name: 'Bolinao Falls', isAlbum: false },
+  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', isAlbum: true },
 ];
 
 let initialPosts = [
@@ -54,7 +54,7 @@ let initialPosts = [
     },
     {
         id: 3,
-        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
+        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/600x400.png' },
         image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
@@ -241,7 +241,14 @@ export default function AlbumDetailPage() {
                                         <video src={post.video} controls className="w-full h-full" />
                                     </div>
                                 )}
-                                <p className="p-4 text-sm">{post.caption}</p>
+                                {(!post.image && !post.video) && (
+                                    <div className="px-4 pt-2">
+                                        <p className="text-base">{post.caption}</p>
+                                    </div>
+                                )}
+                                {(post.image || post.video) && (
+                                     <p className="p-4 text-sm">{post.caption}</p>
+                                )}
                             </CardContent>
                             <CardFooter className="p-2 border-t">
                                 <div className="flex w-full justify-around">
@@ -342,3 +349,5 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
+
+    

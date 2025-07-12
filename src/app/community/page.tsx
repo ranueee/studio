@@ -27,14 +27,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { generateImage } from '@/ai/flows/generate-image-flow';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
-// Mock POIs for location tagging - this will now be used as a base and can grow
 let pois = [
-  { id: 'hundred-islands', name: 'Hundred Islands' },
-  { id: 'patar-beach', name: 'Patar Beach' },
-  { id: 'enchanted-cave', name: 'Enchanted Cave' },
-  { id: 'bolinao-falls', name: 'Bolinao Falls' },
-  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse' },
+  { id: 'hundred-islands', name: 'Hundred Islands', isAlbum: true },
+  { id: 'patar-beach', name: 'Patar Beach', isAlbum: true },
+  { id: 'enchanted-cave', name: 'Enchanted Cave', isAlbum: true },
+  { id: 'bolinao-falls', name: 'Bolinao Falls', isAlbum: false },
+  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', isAlbum: true },
 ];
 
 let initialPosts = [
@@ -121,6 +122,8 @@ export default function CommunityPage() {
     const [mediaTypeToAdd, setMediaTypeToAdd] = useState<'image' | 'video' | null>(null);
     const [isPosting, setIsPosting] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [createAlbum, setCreateAlbum] = useState(false);
+    const [newAlbumName, setNewAlbumName] = useState('');
     const { toast } = useToast();
 
     const processPosts = async (postsToProcess: Post[]) => {
@@ -131,20 +134,22 @@ export default function CommunityPage() {
         return acc;
       }, {} as Record<string, Post[]>);
   
-      const createdAlbums: Album[] = Object.keys(groupedByLocation).map(locationId => {
-        const locationPosts = groupedByLocation[locationId].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-        const locationName = pois.find(p => p.id === locationId)?.name || locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        const coverPost = locationPosts.find(p => p.image);
+      const createdAlbums: Album[] = Object.keys(groupedByLocation)
+        .filter(locationId => pois.some(p => p.id === locationId && p.isAlbum))
+        .map(locationId => {
+            const locationPosts = groupedByLocation[locationId].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+            const locationName = pois.find(p => p.id === locationId)?.name || locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            const coverPost = locationPosts.find(p => p.image);
 
-        return {
-          locationId,
-          locationName,
-          posts: locationPosts,
-          coverImage: coverPost?.image || 'https://placehold.co/300x300.png',
-          imageHint: coverPost?.imageHint,
-          postCount: locationPosts.length,
-        };
-      }).filter(album => album.postCount > 0);
+            return {
+            locationId,
+            locationName,
+            posts: locationPosts,
+            coverImage: coverPost?.image || 'https://placehold.co/300x300.png',
+            imageHint: coverPost?.imageHint,
+            postCount: locationPosts.length,
+            };
+        }).filter(album => album.postCount > 0);
       
       setAlbums(createdAlbums.sort((a, b) => b.posts[0].timestamp.getTime() - a.posts[0].timestamp.getTime()));
       setLoading(false);
@@ -161,6 +166,8 @@ export default function CommunityPage() {
         setNewPostMedia(null);
         setMediaTypeToAdd(null);
         setIsPosting(false);
+        setCreateAlbum(false);
+        setNewAlbumName('');
         setCreateModalOpen(false);
     };
 
@@ -169,29 +176,37 @@ export default function CommunityPage() {
             toast({ variant: 'destructive', title: 'Missing information', description: 'Please add content and a location.' });
             return;
         }
+        if (createAlbum && !newAlbumName.trim()) {
+            toast({ variant: 'destructive', title: 'Missing Album Name', description: 'Please provide a name for the new album.' });
+            return;
+        }
 
         setIsPosting(true);
         
-        let generatedImageUrl: string | undefined = undefined;
-        let imageHint: string | undefined = undefined;
-
+        let mediaUrl: string | undefined;
+        let imageHint: string | undefined;
+        
         if (mediaTypeToAdd === 'image') {
-            try {
-                const result = await generateImage({ prompt: newPostContent });
-                generatedImageUrl = result.imageUrl;
-                imageHint = newPostContent.substring(0, 50);
-            } catch (error) {
-                console.error("Image generation failed", error);
-                toast({ variant: 'destructive', title: 'Image Generation Failed', description: 'Could not generate image. Please try again.' });
-                setIsPosting(false);
-                return;
-            }
+          mediaUrl = 'https://placehold.co/600x400.png';
+          imageHint = 'newly created post';
+        } else if (mediaTypeToAdd === 'video') {
+          mediaUrl = 'placeholder_video_url';
         }
         
         const locationSlug = newPostLocation.trim().toLowerCase().replace(/\s+/g, '-');
-        if (!pois.some(p => p.id === locationSlug)) {
-            pois.push({ id: locationSlug, name: newPostLocation.trim() });
+        const existingPoi = pois.find(p => p.id === locationSlug);
+
+        if (createAlbum) {
+            if (existingPoi) {
+                existingPoi.name = newAlbumName;
+                existingPoi.isAlbum = true;
+            } else {
+                pois.push({ id: locationSlug, name: newAlbumName.trim(), isAlbum: true });
+            }
+        } else if (!existingPoi) {
+            pois.push({ id: locationSlug, name: newPostLocation.trim(), isAlbum: false });
         }
+
 
         const newPost: Post = {
             id: Date.now(),
@@ -200,23 +215,27 @@ export default function CommunityPage() {
             locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
-            ...(mediaTypeToAdd === 'image' && { image: generatedImageUrl, imageHint: imageHint }),
-            ...(mediaTypeToAdd === 'video' && { video: 'placeholder_video_url' }),
+            ...(mediaTypeToAdd === 'image' && { image: mediaUrl, imageHint: imageHint }),
+            ...(mediaTypeToAdd === 'video' && { video: mediaUrl }),
         };
 
         initialPosts.unshift(newPost);
         await processPosts([...initialPosts]);
         
         resetCreateModal();
-        toast({ title: 'Post Created!', description: 'Your adventure has been added to the community.' });
+        toast({ title: 'Post Created!', description: 'Your adventure has been shared.' });
     };
     
     const handleDeleteAlbum = (locationId: string) => {
         initialPosts = initialPosts.filter(p => p.locationId !== locationId);
+        const poiIndex = pois.findIndex(p => p.id === locationId);
+        if (poiIndex > -1) {
+            pois[poiIndex].isAlbum = false; // Keep location, but remove from album view
+        }
         processPosts([...initialPosts]);
         toast({
             title: 'Album Deleted',
-            description: 'The album and all its posts have been removed.',
+            description: 'The album has been removed from your profile.',
         })
     };
 
@@ -245,7 +264,7 @@ export default function CommunityPage() {
                      </div>
                 ) : albums.length > 0 ? (
                     <>
-                    <h2 className="text-xl font-semibold">Albums</h2>
+                    <h2 className="text-xl font-semibold">My Albums</h2>
                     <div className="grid grid-cols-2 gap-4">
                     {albums.map((album) => (
                         <div key={album.locationId} className="relative group">
@@ -282,8 +301,8 @@ export default function CommunityPage() {
                                         <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the album
-                                            and all posts within it.
+                                            This action cannot be undone. This will permanently delete this album from your profile.
+                                            The posts will still exist but will be un-albumed.
                                         </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -302,7 +321,7 @@ export default function CommunityPage() {
                 ) : (
                     <div className="text-center text-muted-foreground py-16">
                         <h3 className="text-lg font-semibold">No Albums Yet</h3>
-                        <p className="mt-2">Create your first post to start a new album!</p>
+                        <p className="mt-2">Create your first post and make an album to see it here!</p>
                     </div>
                 )}
             </div>
@@ -315,7 +334,7 @@ export default function CommunityPage() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <Textarea 
-                            placeholder="What's on your mind? The AI will generate an image from this text if you add an image." 
+                            placeholder="What's on your mind?" 
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
                             className="min-h-[100px]"
@@ -329,6 +348,21 @@ export default function CommunityPage() {
                                 className="pl-9"
                             />
                         </div>
+
+                         <div className="flex items-center space-x-2">
+                            <Switch id="create-album-switch" checked={createAlbum} onCheckedChange={setCreateAlbum} />
+                            <Label htmlFor="create-album-switch">Create a new album for this location</Label>
+                        </div>
+
+                        {createAlbum && (
+                            <div className="pl-2 animate-in fade-in">
+                                <Input
+                                    placeholder="Enter album name"
+                                    value={newAlbumName}
+                                    onChange={(e) => setNewAlbumName(e.target.value)}
+                                />
+                            </div>
+                        )}
 
                          <Select value={newPostVisibility} onValueChange={(v) => setNewPostVisibility(v as any)}>
                             <SelectTrigger>
@@ -363,3 +397,5 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
+
+    
