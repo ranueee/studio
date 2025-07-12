@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
@@ -8,13 +10,15 @@ import { useApp } from '@/hooks/use-app';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 const item = {
   id: 'mango-jam',
   title: 'Sundowners Mango Jam',
   price: 5,
   image: 'https://placehold.co/600x400.png',
-  hint: 'mango jam',
+  hint: 'jar of delicious mango jam',
   description: 'Sweet and tangy mango jam made from fresh, locally sourced mangoes from Pangasinan. Perfect for toast, pastries, or as a glaze.'
 };
 
@@ -22,6 +26,24 @@ export default function RedemptionPage() {
   const router = useRouter();
   const { balance, redeemItem } = useApp();
   const { toast } = useToast();
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [loadingImage, setLoadingImage] = useState(true);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      setLoadingImage(true);
+      try {
+        const result = await generateImage({ prompt: item.hint });
+        setGeneratedImage(result.imageUrl);
+      } catch (error) {
+        console.error("Failed to generate image", error);
+        // Keep placeholder on error
+      } finally {
+        setLoadingImage(false);
+      }
+    };
+    fetchImage();
+  }, []);
 
   const handleRedeem = () => {
     const success = redeemItem(item.price);
@@ -47,7 +69,18 @@ export default function RedemptionPage() {
             <ArrowLeft />
         </Button>
         <div className="mt-12">
-            <Image src={item.image} alt={item.title} data-ai-hint={item.hint} width={600} height={400} className="rounded-lg mb-4 w-full object-cover shadow-lg" />
+            {loadingImage ? (
+              <Skeleton className="h-[250px] w-full rounded-lg mb-4" />
+            ) : (
+              <Image 
+                src={generatedImage || item.image} 
+                alt={item.title} 
+                data-ai-hint={item.hint} 
+                width={600} 
+                height={400} 
+                className="rounded-lg mb-4 w-full object-cover shadow-lg" 
+              />
+            )}
             <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
             <p className="text-muted-foreground mb-6">{item.description}</p>
             
