@@ -159,7 +159,7 @@ export default function MapPage() {
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
         style={{width: '100%', height: '100%'}}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle="mapbox://styles/mapbox/outdoors-v12"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
@@ -179,7 +179,7 @@ export default function MapPage() {
               style={{ cursor: isVisited ? 'default' : 'pointer' }}
             >
                 <div className="relative">
-                    <MapPin className={`w-8 h-8 drop-shadow-lg ${isVisited ? 'text-gray-600' : 'text-gray-400'}`} />
+                    <MapPin className={`w-8 h-8 drop-shadow-lg ${isVisited ? 'text-gray-600' : 'text-primary'}`} />
                 </div>
             </Marker>
           );
@@ -192,7 +192,7 @@ export default function MapPage() {
     <AppShell>
       <div className="relative w-full h-full bg-black">
         {renderMap()}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.9)_50%,rgba(0,0,0,1)_80%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0)_0%,rgba(0,0,0,0.8)_60%,rgba(0,0,0,1)_90%)]" />
       </div>
 
       {/* Location Details Bottom Sheet */}
@@ -269,3 +269,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
