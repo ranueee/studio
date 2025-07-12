@@ -12,11 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useApp } from '@/hooks/use-app';
-import { PlusCircle, Image as ImageIcon, MapPin, Book, Edit, ThumbsUp, MessageSquare, Share2, Globe, Lock, Trash2, Camera, Video, Sparkles } from 'lucide-react';
+import { PlusCircle, Image as ImageIcon, MapPin, Book, Edit, ThumbsUp, MessageSquare, Share2, Globe, Lock, Trash2, Camera, Video, Sparkles, BookPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function CommunityPage() {
     const { albums, addPost } = useApp();
@@ -42,13 +42,14 @@ export default function CommunityPage() {
     };
     
     const handleCreatePost = () => {
-        if (!mediaPreview || !location) {
-            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please add a photo/video and location.' });
+        if (!mediaPreview) {
+            toast({ variant: 'destructive', title: 'Missing Photo/Video', description: 'Please add a photo or video to your post.' });
             return;
         }
 
         let albumId = '';
         let albumName = '';
+        let finalLocation = location || "Unknown Location";
 
         if (albumSelection === 'new') {
             if (!newAlbumName) {
@@ -63,13 +64,15 @@ export default function CommunityPage() {
                 return;
             }
             albumId = existingAlbumId;
-            albumName = albums.find(a => a.id === existingAlbumId)?.name || '';
+            const existingAlbum = albums.find(a => a.id === existingAlbumId);
+            albumName = existingAlbum?.name || '';
+            finalLocation = existingAlbum?.location || finalLocation;
         }
 
         addPost({
             albumId,
             albumName,
-            location,
+            location: finalLocation,
             mediaUrl: mediaPreview,
             mediaType: 'image', // simplified for now
             caption,
@@ -137,90 +140,102 @@ export default function CommunityPage() {
             </div>
 
             <Dialog open={isCreatePostOpen} onOpenChange={(isOpen) => !isOpen && resetForm()}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Create a New Post</DialogTitle>
-                        <DialogDescription>Share your latest adventure with the community.</DialogDescription>
+                <DialogContent className="max-w-lg p-0">
+                    <DialogHeader className="p-4 border-b">
+                        <DialogTitle className="text-center text-xl font-bold">Create Post</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
-                        {mediaPreview ? (
-                            <div className="relative">
-                                <Image src={mediaPreview} alt="Preview" width={400} height={300} className="rounded-lg w-full object-cover" />
+                    <div className="p-4 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <Avatar>
+                                <AvatarImage src="https://placehold.co/80x80.png" />
+                                <AvatarFallback>E</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold">Eco-Explorer</p>
+                                <Select value={visibility} onValueChange={(v: 'public' | 'private') => setVisibility(v)}>
+                                    <SelectTrigger className="h-7 px-2 text-xs w-auto gap-1">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="public"><div className="flex items-center gap-1.5"><Globe className="h-3 w-3" /> Public</div></SelectItem>
+                                        <SelectItem value="private"><div className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Private</div></SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <Textarea 
+                            placeholder="What's on your mind, Eco-Explorer?" 
+                            value={caption} 
+                            onChange={e => setCaption(e.target.value)} 
+                            className="min-h-[120px] text-base border-none focus-visible:ring-0 shadow-none p-0"
+                        />
+                        
+                        {mediaPreview && (
+                            <div className="relative border rounded-lg overflow-hidden">
+                                <Image src={mediaPreview} alt="Preview" width={400} height={300} className="w-full object-cover" />
                                 <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7" onClick={() => setMediaPreview(null)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
-                        ) : (
-                            <div className="w-full">
-                                <Label htmlFor="media-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <Camera className="w-8 h-8 mb-2 text-muted-foreground" />
-                                        <p className="mb-1 text-sm text-muted-foreground">Click to upload</p>
-                                        <p className="text-xs text-muted-foreground">Photo or Video</p>
-                                    </div>
-                                    <Input id="media-upload" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
-                                </Label>
-                            </div>
                         )}
-                        
-                        <Textarea placeholder="Write a caption..." value={caption} onChange={e => setCaption(e.target.value)} />
-                        
-                        <div className="relative">
-                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                           <Input placeholder="Tag Location" className="pl-9" value={location} onChange={e => setLocation(e.target.value)} />
+
+                        <div className="border rounded-lg p-2 flex justify-between items-center">
+                            <span className="text-sm font-medium">Add to your post</span>
+                            <div className="flex items-center gap-1">
+                                <Label htmlFor="media-upload-fb" className="cursor-pointer p-2 rounded-full hover:bg-secondary">
+                                    <ImageIcon className="h-5 w-5 text-green-500" />
+                                </Label>
+                                <Input id="media-upload-fb" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
+
+                                <div className="cursor-pointer p-2 rounded-full hover:bg-secondary">
+                                    <MapPin className="h-5 w-5 text-red-500"/>
+                                </div>
+                                <div className="cursor-pointer p-2 rounded-full hover:bg-secondary">
+                                    <BookPlus className="h-5 w-5 text-blue-500" />
+                                </div>
+                            </div>
                         </div>
                         
-                        <Separator />
+                        <div className="space-y-2">
+                             <div className="relative">
+                               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                               <Input placeholder="Tag Location" className="pl-9" value={location} onChange={e => setLocation(e.target.value)} />
+                            </div>
 
-                        <div>
-                            <Label>Album</Label>
-                             <RadioGroup value={albumSelection} onValueChange={(val) => setAlbumSelection(val)} className="flex mt-2">
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="new" id="new-album" />
-                                    <Label htmlFor="new-album">Create New</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="existing" id="existing-album" disabled={!albums || albums.length === 0} />
-                                    <Label htmlFor="existing-album" className={!albums || albums.length === 0 ? 'text-muted-foreground' : ''}>Add to Existing</Label>
-                                </div>
-                            </RadioGroup>
+                             <Select onValueChange={(val) => {
+                                const isNew = val === "new-album-option";
+                                setAlbumSelection(isNew ? 'new' : 'existing');
+                                if (!isNew) {
+                                    setExistingAlbumId(val);
+                                } else {
+                                    setExistingAlbumId('');
+                                }
+                            }}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Choose an album for your post" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="new-album-option">
+                                        <div className="flex items-center gap-2"><PlusCircle className="h-4 w-4" />Create New Album</div>
+                                    </SelectItem>
+                                    {albums && albums.map(album => (
+                                        <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                            {albumSelection === 'new' ? (
+                            {albumSelection === 'new' && (
                                 <div className="relative mt-2">
                                     <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input placeholder="New Album Name" className="pl-9" value={newAlbumName} onChange={e => setNewAlbumName(e.target.value)} />
                                 </div>
-                            ) : (
-                                <Select onValueChange={setExistingAlbumId} value={existingAlbumId}>
-                                    <SelectTrigger className="mt-2">
-                                        <SelectValue placeholder="Select an album" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {albums && albums.map(album => (
-                                            <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
                             )}
                         </div>
 
-                         <div>
-                            <Label>Visibility</Label>
-                            <RadioGroup defaultValue="public" className="flex mt-2 gap-4" onValueChange={(val: 'public' | 'private') => setVisibility(val)}>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="public" id="public" />
-                                    <Label htmlFor="public" className="flex items-center gap-2"><Globe className="h-4 w-4"/> Public</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="private" id="private" />
-                                    <Label htmlFor="private" className="flex items-center gap-2"><Lock className="h-4 w-4"/> Private</Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={resetForm}>Cancel</Button>
-                        <Button onClick={handleCreatePost}>Post</Button>
+                    <DialogFooter className="p-4 pt-0">
+                        <Button onClick={handleCreatePost} className="w-full" disabled={!mediaPreview}>Post</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
