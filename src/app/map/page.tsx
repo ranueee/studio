@@ -155,7 +155,17 @@ export default function MapPage() {
   
   const renderMap = () => {
      if (loadError) {
-        return <div className="flex items-center justify-center h-full text-center p-4">Error loading maps. Please ensure you have a valid API key in your .env file.</div>;
+        return <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
+            <div className="max-w-md">
+                <h2 className="font-bold text-lg text-white">Map Loading Error</h2>
+                <p className="mt-2 text-sm">Could not load Google Maps. This is usually due to an API key issue. Please check the following:</p>
+                <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
+                    <li>Ensure `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set in your `.env` file.</li>
+                    <li>Verify the key is correct and the Maps JavaScript API is enabled in your Google Cloud project.</li>
+                    <li>Check your API key restrictions (e.g., HTTP referrers).</li>
+                </ul>
+            </div>
+        </div>;
     }
     
     if (!isLoaded) {
@@ -287,3 +297,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
