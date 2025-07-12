@@ -80,10 +80,9 @@ export default function CommunityPage() {
     return (
         <AppShell>
             <div className="p-4 space-y-6">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold">Community</h1>
-                    <Button onClick={() => setCreatePostOpen(true)}>
-                        <PlusCircle className="mr-2" /> Create Post
+                <div className="fixed bottom-20 right-5 z-20">
+                    <Button size="icon" className="w-14 h-14 rounded-full shadow-lg" onClick={() => setCreatePostOpen(true)}>
+                        <PlusCircle className="w-8 h-8"/>
                     </Button>
                 </div>
 
