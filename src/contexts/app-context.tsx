@@ -25,6 +25,15 @@ export type Post = {
     comments: Comment[];
 };
 
+export type Voucher = {
+    id: string;
+    title: string;
+    description: string;
+    status: 'available' | 'used';
+    brand: string;
+};
+
+
 export interface AppState {
   xp: number;
   level: number;
@@ -32,6 +41,7 @@ export interface AppState {
   unlockedBadges: string[];
   visitedPois: string[];
   posts: Post[];
+  vouchers: Voucher[];
 }
 
 export interface AppContextType extends AppState {
@@ -44,6 +54,7 @@ export interface AppContextType extends AppState {
   deletePost: (postId: number) => void;
   editPost: (postId: number, newCaption: string) => void;
   addCommentToPost: (postId: number, comment: Comment) => void;
+  useVoucher: (voucherId: string) => void;
 }
 
 // Initial Data
@@ -117,6 +128,12 @@ const initialPosts: Post[] = [
     },
 ];
 
+const initialVouchers: Voucher[] = [
+    { id: 'v1', title: '10% Off Sundowners Jam', description: 'Get 10% off your next purchase of any Sundowners Mango Jam.', status: 'available', brand: 'Sundowners' },
+    { id: 'v2', title: 'Free Coffee Upgrade', description: 'Upgrade to a large size for free at Kape-tan Coffee.', status: 'available', brand: 'Kape-tan' },
+    { id: 'v3', title: 'Buy 1 Take 1 Keychain', description: 'Buy one hand-woven keychain and get another one for free.', status: 'used', brand: 'Local Artisans' },
+];
+
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -128,6 +145,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     unlockedBadges: [],
     visitedPois: [],
     posts: initialPosts,
+    vouchers: initialVouchers,
   });
 
   const addXp = useCallback((amount: number) => {
@@ -201,9 +219,18 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     }))
   }, []);
 
+  const useVoucher = useCallback((voucherId: string) => {
+    setState(prevState => ({
+        ...prevState,
+        vouchers: prevState.vouchers.map(v => 
+            v.id === voucherId ? { ...v, status: 'used' } : v
+        )
+    }));
+  }, []);
+
 
   return (
-    <AppContext.Provider value={{ ...state, addXp, addBalance, redeemItem, addBadge, addVisitedPoi, addPost, deletePost, editPost, addCommentToPost }}>
+    <AppContext.Provider value={{ ...state, addXp, addBalance, redeemItem, addBadge, addVisitedPoi, addPost, deletePost, editPost, addCommentToPost, useVoucher }}>
       {children}
     </AppContext.Provider>
   );

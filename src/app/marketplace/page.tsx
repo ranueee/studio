@@ -8,6 +8,8 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Ticket } from 'lucide-react';
 
 type Item = {
   id: string;
@@ -51,7 +53,15 @@ export default function MarketplacePage() {
   return (
     <AppShell>
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-4">Marketplace</h1>
+        <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold">Marketplace</h1>
+            <Button asChild variant="outline">
+                <Link href="/marketplace/vouchers">
+                    <Ticket className="mr-2 h-4 w-4" />
+                    My Vouchers
+                </Link>
+            </Button>
+        </div>
         <p className="text-muted-foreground mb-6">Redeem your $ECLB for local products and experiences!</p>
         <div className="grid grid-cols-2 gap-4">
           {displayItems.map((item: Partial<Item> & { id: any }, index) => (
