@@ -246,7 +246,7 @@ export default function ProfilePage() {
     <AppShell>
       <div className="p-4 space-y-6">
         <div className="flex flex-col items-center text-center space-y-2">
-          <Image src="https://placehold.co/80x80.png" alt="User profile" width={80} height={80} className="rounded-full border-4 border-primary" data-ai-hint="profile picture"/>
+          <Image src="https://placehold.co/80x80.png" alt="User profile avatar" width={80} height={80} className="rounded-full border-4 border-primary" data-ai-hint="profile avatar"/>
           <h1 className="text-2xl font-bold">Eco-Explorer</h1>
           <div>
             <div className="flex justify-between items-center mb-1 text-sm">
