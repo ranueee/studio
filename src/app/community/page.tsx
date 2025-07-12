@@ -17,9 +17,9 @@ import { PlusCircle, Image as ImageIcon, MapPin, Book, Edit, ThumbsUp, MessageSq
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function CommunityPage() {
     const { albums, addPost } = useApp();
@@ -27,7 +27,7 @@ export default function CommunityPage() {
     const [isCreatePostOpen, setCreatePostOpen] = useState(false);
     const [caption, setCaption] = useState('');
     const [location, setLocation] = useState('');
-    const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+    const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
     const [albumSelection, setAlbumSelection] = useState('new');
     const [newAlbumName, setNewAlbumName] = useState('');
     const [existingAlbumId, setExistingAlbumId] = useState('');
@@ -41,19 +41,32 @@ export default function CommunityPage() {
     }, []);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setMediaPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        const files = event.target.files;
+        if (files) {
+            const newPreviews: string[] = [];
+            let filesToProcess = files.length;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    newPreviews.push(reader.result as string);
+                    filesToProcess--;
+                    if (filesToProcess === 0) {
+                       setMediaPreviews(prev => [...prev, ...newPreviews]);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
         }
     };
     
+    const removeMedia = (index: number) => {
+        setMediaPreviews(previews => previews.filter((_, i) => i !== index));
+    };
+
     const handleCreatePost = () => {
-        if (!mediaPreview) {
-            toast({ variant: 'destructive', title: 'Missing Photo/Video', description: 'Please add a photo or video to your post.' });
+        if (mediaPreviews.length === 0) {
+            toast({ variant: 'destructive', title: 'Missing Photo/Video', description: 'Please add at least one photo or video to your post.' });
             return;
         }
 
@@ -83,7 +96,7 @@ export default function CommunityPage() {
             albumId,
             albumName,
             location: finalLocation,
-            mediaUrl: mediaPreview,
+            mediaUrls: mediaPreviews,
             mediaType: 'image', // simplified for now
             caption,
             visibility,
@@ -97,7 +110,7 @@ export default function CommunityPage() {
         setCreatePostOpen(false);
         setCaption('');
         setLocation('');
-        setMediaPreview(null);
+        setMediaPreviews([]);
         setAlbumSelection('new');
         setNewAlbumName('');
         setExistingAlbumId('');
@@ -211,12 +224,29 @@ export default function CommunityPage() {
                                 className="min-h-[120px] text-base border-none focus-visible:ring-0 shadow-none p-0"
                             />
                             
-                            {mediaPreview && (
-                                <div className="relative border rounded-lg overflow-hidden">
-                                    <Image src={mediaPreview} alt="Preview" width={400} height={300} className="w-full object-cover" />
-                                    <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7" onClick={() => setMediaPreview(null)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                            {mediaPreviews.length > 0 && (
+                                <div className="border rounded-lg p-2">
+                                    <div className={cn(
+                                        "grid gap-2",
+                                        mediaPreviews.length === 1 ? "grid-cols-1" :
+                                        mediaPreviews.length === 2 ? "grid-cols-2" :
+                                        "grid-cols-3"
+                                    )}>
+                                        {mediaPreviews.map((src, index) => (
+                                            <div key={index} className="relative">
+                                                <Image src={src} alt={`Preview ${index + 1}`} width={200} height={200} className="w-full h-auto object-cover rounded-md aspect-square" />
+                                                <Button size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeMedia(index)}>
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Label htmlFor="media-upload-add-more" className="mt-2">
+                                        <Button variant="outline" className="w-full mt-2" asChild>
+                                           <span><PlusCircle className="mr-2 h-4 w-4" /> Add / Edit Photos</span>
+                                        </Button>
+                                        <Input id="media-upload-add-more" type="file" className="hidden" accept="image/*,video/*" multiple onChange={handleFileChange} />
+                                    </Label>
                                 </div>
                             )}
 
@@ -227,7 +257,7 @@ export default function CommunityPage() {
                                         <Label htmlFor="media-upload-fb" className="cursor-pointer p-2 rounded-full hover:bg-secondary">
                                             <ImageIcon className="h-5 w-5 text-green-500" />
                                         </Label>
-                                        <Input id="media-upload-fb" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
+                                        <Input id="media-upload-fb" type="file" className="hidden" accept="image/*,video/*" multiple onChange={handleFileChange} />
                                         
                                         <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary" onClick={() => handleSectionToggle('location')}>
                                             <MapPin className="h-5 w-5 text-red-500" />
@@ -281,7 +311,7 @@ export default function CommunityPage() {
                         </div>
                     </ScrollArea>
                     <DialogFooter className="p-4 pt-0 border-t">
-                        <Button onClick={handleCreatePost} className="w-full" disabled={!mediaPreview}>Post</Button>
+                        <Button onClick={handleCreatePost} className="w-full" disabled={mediaPreviews.length === 0}>Post</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -19,7 +19,7 @@ export type Post = {
     albumId: string;
     albumName: string;
     location: string;
-    mediaUrl: string;
+    mediaUrls: string[];
     mediaType: 'image' | 'video';
     caption: string;
     visibility: 'public' | 'private';
@@ -88,7 +88,7 @@ const initialPosts: Post[] = [
         userId: 'user1',
         userName: 'Eco-Explorer',
         userAvatar: 'https://placehold.co/80x80.png',
-        mediaUrl: 'https://placehold.co/600x400.png',
+        mediaUrls: ['https://placehold.co/600x400.png'],
         mediaType: 'image',
         caption: 'First time seeing the famous white sand of Patar Beach! It was breathtaking. #Pangasinan #BeachLife',
         visibility: 'public',
@@ -215,7 +215,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
               // Update existing album
               albums = albums.map(a => 
                   a.id === newPost.albumId 
-                  ? { ...a, postCount: a.postCount + 1, coverImage: newPost.mediaUrl }
+                  ? { ...a, postCount: a.postCount + 1, coverImage: newPost.mediaUrls[0] }
                   : a
               );
           } else {
@@ -225,7 +225,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
                   name: newPost.albumName,
                   location: newPost.location,
                   postCount: 1,
-                  coverImage: newPost.mediaUrl,
+                  coverImage: newPost.mediaUrls[0],
               };
               albums = [album, ...albums];
           }
@@ -253,7 +253,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
                 return {
                     ...album,
                     postCount: album.postCount - 1,
-                    coverImage: remainingPostsInAlbum.length > 0 ? remainingPostsInAlbum[0].mediaUrl : 'https://placehold.co/600x400.png'
+                    coverImage: remainingPostsInAlbum.length > 0 ? remainingPostsInAlbum[0].mediaUrls[0] : 'https://placehold.co/600x400.png'
                 };
             }
             return album;

@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send, Share2, Trash2, Edit } from 'lucide-react';
 import type { Post, Comment, Album } from '@/contexts/app-context';
 import { Separator } from '@/components/ui/separator';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 const PostCard = ({ post, onLike, onComment }: { post: Post, onLike: (postId: string) => void, onComment: (postId: string, text: string) => void }) => {
     const { toast } = useToast();
@@ -72,7 +73,21 @@ const PostCard = ({ post, onLike, onComment }: { post: Post, onLike: (postId: st
                 </DropdownMenu>
             </CardHeader>
             <CardContent className="p-0">
-                <Image src={post.mediaUrl} alt={post.caption} width={500} height={500} className="w-full object-cover" />
+                 <Carousel className="w-full">
+                    <CarouselContent>
+                        {post.mediaUrls.map((url, index) => (
+                             <CarouselItem key={index}>
+                                <Image src={url} alt={`${post.caption} - ${index+1}`} width={500} height={500} className="w-full object-cover aspect-square" />
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    {post.mediaUrls.length > 1 && (
+                        <>
+                            <CarouselPrevious className="left-2" />
+                            <CarouselNext className="right-2" />
+                        </>
+                    )}
+                </Carousel>
                 <div className="p-4 space-y-2">
                     <p className="text-sm">{post.caption}</p>
                 </div>
@@ -142,19 +157,23 @@ export default function AlbumDetailPage() {
 
     const [album, setAlbum] = useState<Album | null>(null);
     const [albumPosts, setAlbumPosts] = useState<Post[]>([]);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
         const currentAlbum = albums.find(a => a.id === albumId);
         if (currentAlbum) {
             setAlbum(currentAlbum);
             const postsInAlbum = posts.filter(p => p.albumId === albumId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setAlbumPosts(postsInAlbum);
         } else {
-            router.push('/community');
+             if (isClient) {
+                router.push('/community');
+            }
         }
-    }, [albumId, albums, posts, router]);
+    }, [albumId, albums, posts, router, isClient]);
 
-    if (!album) {
+    if (!isClient || !album) {
         return (
             <AppShell>
                 <div className="flex items-center justify-center h-full">
@@ -190,4 +209,3 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
-
