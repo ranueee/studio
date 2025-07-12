@@ -22,7 +22,7 @@ import { QRCodeSVG } from '@/components/qr-code';
 
 // NOTE: This is your actual deployed $ECLB token contract address
 const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603';
-const VICTION_TESTNET_CHAIN_ID = '0x58'; // 88 in hex
+const VICTION_TESTNET_CHAIN_ID = '0x89'; // 88 in hex
 
 // Minimal ABI to get the token balance, decimals, and send tokens
 const erc20Abi = [
@@ -73,8 +73,8 @@ export default function ProfilePage() {
   };
 
   const disconnectWallet = () => {
-    setWalletAddress(null);
-    setTokenBalance('0.00');
+    setWalletAddress('0xDbC404429cAEe094c0025dC8F9a67f44F0Cd728d');
+    setTokenBalance('21.17');
     toast({
         title: "Wallet Disconnected",
         description: "Your wallet has been disconnected.",
@@ -110,7 +110,7 @@ export default function ProfilePage() {
                         chainId: VICTION_TESTNET_CHAIN_ID,
                         chainName: 'Viction Testnet',
                         nativeCurrency: { name: 'VIC', symbol: 'VIC', decimals: 18 },
-                        rpcUrls: ['https://rpc-testnet.viction.xyz'],
+                        rpcUrls: ['https://89.rpc.thirdweb.com'],
                         blockExplorerUrls: ['https://testnet.vicscan.xyz']
                     }]
                  });

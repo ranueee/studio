@@ -322,6 +322,9 @@ export default function CommunityPage() {
                     <div className="text-center text-muted-foreground py-16">
                         <h3 className="text-lg font-semibold">No Albums Yet</h3>
                         <p className="mt-2">Create your first post and make an album to see it here!</p>
+                        <Button variant="default" className="mt-4" onClick={() => setCreateModalOpen(true)}>
+                           Create Album
+                        </Button>
                     </div>
                 )}
             </div>
@@ -397,5 +400,3 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
-
-    
