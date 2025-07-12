@@ -55,12 +55,6 @@ export default function MarketplacePage() {
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold">Marketplace</h1>
-            <Button asChild variant="outline">
-                <Link href="/marketplace/vouchers">
-                    <Ticket className="mr-2 h-4 w-4" />
-                    My Vouchers
-                </Link>
-            </Button>
         </div>
         <p className="text-muted-foreground mb-6">Redeem your $ECLB for local products and experiences!</p>
         <div className="grid grid-cols-2 gap-4">
