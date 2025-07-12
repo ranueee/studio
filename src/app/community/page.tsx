@@ -8,7 +8,6 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, MapPin, ImagePlus, Video, Globe, Lock, Send, MoreVertical, Trash2 } from 'lucide-react';
-import { generateImage } from '@/ai/flows/generate-image-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +15,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Mock POIs for location tagging - this will now be used as a base and can grow
 let pois = [
@@ -49,7 +59,7 @@ let initialPosts = [
     },
     {
         id: 3,
-        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
+        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/600x400.png' },
         image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
@@ -96,6 +106,7 @@ type Album = {
   locationName: string;
   posts: Post[];
   coverImage: string;
+  imageHint?: string;
   postCount: number;
 };
 
@@ -121,17 +132,19 @@ export default function CommunityPage() {
       const createdAlbums: Album[] = Object.keys(groupedByLocation).map(locationId => {
         const locationPosts = groupedByLocation[locationId].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
         const locationName = pois.find(p => p.id === locationId)?.name || locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        
+        const coverPost = locationPosts.find(p => p.image);
+
         return {
           locationId,
           locationName,
           posts: locationPosts,
-          coverImage: locationPosts.find(p => p.image)?.image || 'https://placehold.co/300x300.png',
+          coverImage: coverPost?.image || 'https://placehold.co/300x300.png',
+          imageHint: coverPost?.imageHint,
           postCount: locationPosts.length,
         };
       });
       
-      setAlbums(createdAlbums);
+      setAlbums(createdAlbums.sort((a, b) => b.posts[0].timestamp.getTime() - a.posts[0].timestamp.getTime()));
       setLoading(false);
     };
 
@@ -168,25 +181,36 @@ export default function CommunityPage() {
             locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
-            ...(newPostMedia?.type === 'image' && { image: newPostMedia.url }),
+            ...(newPostMedia?.type === 'image' && { image: newPostMedia.url, imageHint: 'community post' }),
             ...(newPostMedia?.type === 'video' && { video: newPostMedia.url }),
         };
 
-        initialPosts.push(newPost); // Mutating for demo purposes. In a real app, you'd update state.
+        initialPosts.unshift(newPost);
         await processPosts([...initialPosts]);
         
         resetCreateModal();
         toast({ title: 'Post Created!', description: 'Your adventure has been added to the community.' });
     };
+    
+    const handleDeleteAlbum = (locationId: string) => {
+        initialPosts = initialPosts.filter(p => p.locationId !== locationId);
+        processPosts([...initialPosts]);
+        toast({
+            title: 'Album Deleted',
+            description: 'The album and all its posts have been removed.',
+        })
+    };
 
     const handleAddMedia = (type: 'image' | 'video') => {
         if (type === 'image') {
+            // In a real app, this would open a file picker.
             setNewPostMedia({ type: 'image', url: 'https://placehold.co/600x400.png' });
-            toast({ title: 'Image Added', description: 'A placeholder image has been added. In a real app, you would open a file picker.' });
+            toast({ title: 'Image Added', description: 'A placeholder image has been added.' });
         }
-        // Video is just a placeholder for now
         if (type === 'video') {
-            toast({ title: 'Video Upload', description: 'Video functionality is not yet implemented.' });
+             // In a real app, this would open a file picker.
+            setNewPostMedia({ type: 'video', url: 'placeholder_video_url' });
+            toast({ title: 'Video Added', description: 'A placeholder video has been added.' });
         }
     };
 
@@ -201,28 +225,70 @@ export default function CommunityPage() {
                     </Button>
                 </div>
                 
-                <h2 className="text-xl font-semibold">Albums</h2>
-                
                 {loading ? (
                      <div className="grid grid-cols-2 gap-4">
                         {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-48 rounded-lg" />)}
                      </div>
-                ) : (
+                ) : albums.length > 0 ? (
+                    <>
+                    <h2 className="text-xl font-semibold">Albums</h2>
                     <div className="grid grid-cols-2 gap-4">
                     {albums.map((album) => (
-                        <Link href={`/community/album/${album.locationId}`} key={album.locationId}>
-                            <Card className="overflow-hidden h-48 flex flex-col group hover:shadow-lg transition-shadow">
-                                <div className="relative h-full">
-                                    <Image src={album.coverImage} alt={album.locationName} data-ai-hint="philippines album" fill className="object-cover group-hover:scale-105 transition-transform" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                    <div className="absolute bottom-0 left-0 p-3 text-white">
-                                        <h3 className="font-bold">{album.locationName}</h3>
-                                        <p className="text-xs">{album.postCount} {album.postCount > 1 ? 'posts' : 'post'}</p>
+                        <div key={album.locationId} className="relative group">
+                            <Link href={`/community/album/${album.locationId}`}>
+                                <Card className="overflow-hidden h-48 flex flex-col hover:shadow-lg transition-shadow">
+                                    <div className="relative h-full">
+                                        <Image src={album.coverImage} alt={album.locationName} data-ai-hint={album.imageHint || "philippines album"} fill className="object-cover group-hover:scale-105 transition-transform" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                        <div className="absolute bottom-0 left-0 p-3 text-white">
+                                            <h3 className="font-bold">{album.locationName}</h3>
+                                            <p className="text-xs">{album.postCount} {album.postCount > 1 ? 'posts' : 'post'}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </Card>
-                        </Link>
+                                </Card>
+                            </Link>
+                            <div className="absolute top-1 right-1">
+                                 <AlertDialog>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem className="text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Delete Album</span>
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                     <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the album
+                                            and all posts within it.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteAlbum(album.locationId)} className="bg-destructive hover:bg-destructive/90">
+                                            Delete
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </div>
                     ))}
+                    </div>
+                    </>
+                ) : (
+                    <div className="text-center text-muted-foreground py-16">
+                        <h3 className="text-lg font-semibold">No Albums Yet</h3>
+                        <p className="mt-2">Create your first post to start a new album!</p>
                     </div>
                 )}
             </div>
@@ -262,7 +328,13 @@ export default function CommunityPage() {
                         
                         {newPostMedia && (
                             <div className="relative w-full aspect-video rounded-md overflow-hidden">
-                                <Image src={newPostMedia.url} alt="media preview" fill className="object-cover" />
+                                {newPostMedia.type === 'image' ? (
+                                    <Image src={newPostMedia.url} alt="media preview" fill className="object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-black flex items-center justify-center text-white">
+                                        <Video className="w-12 h-12"/>
+                                    </div>
+                                )}
                                 <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setNewPostMedia(null)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>

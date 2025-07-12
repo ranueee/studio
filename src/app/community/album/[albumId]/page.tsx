@@ -8,12 +8,13 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Share2, Globe, Lock, ArrowLeft, Copy, Trash2, MoreVertical } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Heart, MessageCircle, Share2, Globe, Lock, ArrowLeft, Copy, Trash2, MoreVertical, Edit, Video } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
@@ -104,22 +105,24 @@ export default function AlbumDetailPage() {
     const [albumName, setAlbumName] = useState('');
     const [loading, setLoading] = useState(true);
     const [isShareModalOpen, setShareModalOpen] = useState(false);
+    const [isEditModalOpen, setEditModalOpen] = useState(false);
+    const [editingPost, setEditingPost] = useState<Post | null>(null);
+    const [editedCaption, setEditedCaption] = useState('');
     const { toast } = useToast();
+
+    const fetchAlbumData = () => {
+        setLoading(true);
+        const albumPosts = initialPosts.filter(p => p.locationId === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+        
+        setPosts(albumPosts);
+        const location = pois.find(p => p.id === albumId);
+        const friendlyAlbumName = location?.name || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        setAlbumName(friendlyAlbumName);
+        setLoading(false);
+    };
 
     useEffect(() => {
         if (!albumId) return;
-
-        const fetchAlbumData = () => {
-            setLoading(true);
-            const albumPosts = initialPosts.filter(p => p.locationId === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-            
-            setPosts(albumPosts);
-            const location = pois.find(p => p.id === albumId);
-            const friendlyAlbumName = location?.name || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            setAlbumName(friendlyAlbumName);
-            setLoading(false);
-        };
-
         fetchAlbumData();
     }, [albumId]);
     
@@ -139,13 +142,36 @@ export default function AlbumDetailPage() {
     }
 
     const handleDeletePost = (postId: number) => {
-        // In a real app, you would make an API call to delete the post from the database.
-        // Here, we'll just filter it out from the local state for demonstration.
         initialPosts = initialPosts.filter(p => p.id !== postId);
         setPosts(posts.filter(p => p.id !== postId));
         toast({
             title: "Post Deleted",
             description: "The post has been removed from the album.",
+        });
+    }
+
+    const openEditModal = (post: Post) => {
+        setEditingPost(post);
+        setEditedCaption(post.caption);
+        setEditModalOpen(true);
+    }
+
+    const handleEditPost = () => {
+        if (!editingPost) return;
+
+        const postIndex = initialPosts.findIndex(p => p.id === editingPost.id);
+        if (postIndex > -1) {
+            initialPosts[postIndex].caption = editedCaption;
+        }
+
+        setPosts(posts.map(p => p.id === editingPost.id ? { ...p, caption: editedCaption } : p));
+        
+        setEditModalOpen(false);
+        setEditingPost(null);
+        setEditedCaption('');
+        toast({
+            title: "Post Updated",
+            description: "Your post caption has been updated.",
         });
     }
 
@@ -187,6 +213,10 @@ export default function AlbumDetailPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => openEditModal(post)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Edit</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 <span>Delete</span>
@@ -208,6 +238,7 @@ export default function AlbumDetailPage() {
                                 )}
                                 {post.video && (
                                      <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
+                                        <Video className="w-12 h-12 mr-4"/> 
                                         Video playback not implemented.
                                     </div>
                                 )}
@@ -247,7 +278,7 @@ export default function AlbumDetailPage() {
                     ))}
                      {!loading && posts.length === 0 && (
                         <div className="text-center text-muted-foreground py-10">
-                            <p>No posts in this album yet.</p>
+                            <p>This album is empty.</p>
                             <Button variant="link" onClick={() => router.push('/community')}>Go back to albums</Button>
                         </div>
                     )}
@@ -284,6 +315,29 @@ export default function AlbumDetailPage() {
                             <span>Copy Link</span>
                         </Button>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Post</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your post caption.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            value={editedCaption}
+                            onChange={(e) => setEditedCaption(e.target.value)}
+                            className="min-h-[120px]"
+                            placeholder="Write your new caption..."
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleEditPost}>Save Changes</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </AppShell>

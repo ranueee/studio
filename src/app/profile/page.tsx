@@ -69,7 +69,7 @@ export default function ProfilePage() {
         const account = accounts[0];
         setWalletAddress(account);
         
-        if (ECLB_TOKEN_CONTRACT_ADDRESS === '0x21C6305c79e63FB306BFbfD1f35bda2FB9f9560B') {
+        if (ECLB_TOKEN_CONTRACT_ADDRESS === '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603') {
             console.warn("Using placeholder token balance. Replace `ECLB_TOKEN_CONTRACT_ADDRESS` in profile page.");
             setTokenBalance("1,234.56"); // Placeholder balance for UI development
         } else {
