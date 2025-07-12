@@ -15,10 +15,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MapPin, ImagePlus, Video, Globe, Lock } from 'lucide-react';
+import { MapPin, ImagePlus, Globe, Lock } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
 
 let initialPosts: any[] = [
     {
@@ -78,15 +79,6 @@ let initialPosts: any[] = [
     },
 ];
 
-let pois = [
-  { id: 'hundred-islands', name: 'Hundred Islands', isAlbum: true },
-  { id: 'patar-beach', name: 'Patar Beach', isAlbum: true },
-  { id: 'enchanted-cave', name: 'Enchanted Cave', isAlbum: true },
-  { id: 'bolinao-falls', name: 'Bolinao Falls', isAlbum: false },
-  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', isAlbum: true },
-];
-
-
 type Post = {
   id: number;
   user: { name: string; avatar: string; };
@@ -120,12 +112,13 @@ export default function CommunityPage() {
     const [newPostLocation, setNewPostLocation] = useState('');
     const [newPostVisibility, setNewPostVisibility] = useState<'Public' | 'Private'>('Public');
     const [newPostMedia, setNewPostMedia] = useState<{type: 'image' | 'video', url: string, file: File} | null>(null);
-    const [mediaTypeToAdd, setMediaTypeToAdd] = useState<'image' | 'video' | 'text' | null>(null);
     const [isPosting, setIsPosting] = useState(false);
-    const [createAlbumSwitch, setCreateAlbumSwitch] = useState(false);
-    const [newAlbumName, setNewAlbumName] = useState('');
-    const [selectedAlbum, setSelectedAlbum] = useState<string>('');
+    const [albumNameInput, setAlbumNameInput] = useState('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isAlbumPopoverOpen, setAlbumPopoverOpen] = useState(false);
+
+    const existingAlbumNames = [...new Set(initialPosts.filter(p => p.albumName).map(p => p.albumName))];
+    const filteredAlbums = existingAlbumNames.filter(name => name.toLowerCase().includes(albumNameInput.toLowerCase()));
 
     const processPostsIntoAlbums = () => {
       setLoading(true);
@@ -161,9 +154,7 @@ export default function CommunityPage() {
     }, []);
     
     const handleDeleteAlbum = (albumNameToDelete: string) => {
-        // Simulate deleting from the "database"
         initialPosts = initialPosts.filter(p => p.albumName !== albumNameToDelete);
-        // Update the state to re-render
         processPostsIntoAlbums();
         toast({
             title: "Album Deleted",
@@ -176,11 +167,8 @@ export default function CommunityPage() {
         setNewPostLocation('');
         setNewPostVisibility('Public');
         setNewPostMedia(null);
-        setMediaTypeToAdd(null);
         setIsPosting(false);
-        setCreateAlbumSwitch(false);
-        setNewAlbumName('');
-        setSelectedAlbum('');
+        setAlbumNameInput('');
         setCreateModalOpen(false);
     };
 
@@ -211,13 +199,8 @@ export default function CommunityPage() {
             ...mediaData,
         };
 
-        if (newPostMedia) {
-          if (createAlbumSwitch && newAlbumName.trim()) {
-            newPost.albumName = newAlbumName.trim();
-          } else if (selectedAlbum) {
-            const album = pois.find(p => p.id === selectedAlbum);
-            newPost.albumName = album?.name;
-          }
+        if (newPostMedia && albumNameInput.trim()) {
+            newPost.albumName = albumNameInput.trim();
         }
         
         initialPosts.unshift(newPost);
@@ -232,14 +215,13 @@ export default function CommunityPage() {
         if (file) {
             const url = URL.createObjectURL(file);
             const type = file.type.startsWith('image/') ? 'image' : 'video';
-            setMediaTypeToAdd(type);
             setNewPostMedia({ type, url, file });
         }
     };
-
-    const handleAddMedia = (type: 'image' | 'video') => {
-        setMediaTypeToAdd(type);
-        fileInputRef.current?.click();
+    
+    const handleAlbumSelect = (name: string) => {
+        setAlbumNameInput(name);
+        setAlbumPopoverOpen(false);
     };
 
     return (
@@ -356,45 +338,43 @@ export default function CommunityPage() {
                         </div>
 
                         {newPostMedia && (
-                            <div className="space-y-4 p-4 border rounded-lg">
-                                <Label className="font-semibold">Album Options</Label>
-                                <Select value={selectedAlbum} onValueChange={setSelectedAlbum} disabled={createAlbumSwitch}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an existing album" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {pois.filter(p => p.isAlbum).map(album => (
-                                            <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="create-album-switch" checked={createAlbumSwitch} onCheckedChange={setCreateAlbumSwitch} />
-                                    <Label htmlFor="create-album-switch">Or create a new album</Label>
-                                </div>
-
-                                {createAlbumSwitch && (
-                                    <div className="pl-2 animate-in fade-in">
+                             <Popover open={isAlbumPopoverOpen} onOpenChange={setAlbumPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <div className="relative">
+                                         <PlusCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                         <Input
-                                            placeholder="Enter new album name"
-                                            value={newAlbumName}
-                                            onChange={(e) => setNewAlbumName(e.target.value)}
+                                            placeholder="Add to album (optional)"
+                                            value={albumNameInput}
+                                            onChange={(e) => setAlbumNameInput(e.target.value)}
+                                            onFocus={() => setAlbumPopoverOpen(true)}
+                                            className="pl-9"
                                         />
                                     </div>
+                                </PopoverTrigger>
+                                {filteredAlbums.length > 0 && (
+                                     <PopoverContent className="p-1 w-[--radix-popover-trigger-width]">
+                                        <div className="space-y-1">
+                                        {filteredAlbums.map(name => (
+                                            <Button
+                                                key={name}
+                                                variant="ghost"
+                                                className="w-full justify-start font-normal"
+                                                onClick={() => handleAlbumSelect(name)}
+                                            >
+                                                {name}
+                                            </Button>
+                                        ))}
+                                        </div>
+                                    </PopoverContent>
                                 )}
-                            </div>
+                            </Popover>
                         )}
                          
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-muted-foreground">
-                                <span>Add to post:</span>
+                            <div className="flex items-center gap-2 text-muted-foreground">
                                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" style={{ display: 'none' }} />
-                                <Button variant="ghost" size="icon" onClick={() => handleAddMedia('image')}>
-                                    <ImagePlus className="text-primary"/>
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleAddMedia('video')}>
-                                    <Video className="text-primary"/>
+                                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                    <ImagePlus className="mr-2"/> Add Media
                                 </Button>
                             </div>
                             <div className="flex items-center space-x-2">
