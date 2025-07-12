@@ -39,7 +39,7 @@ const generateImageFlow = ai.defineFlow(
   async (input) => {
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: input.prompt,
+      prompt: `A high-quality, realistic, vibrant product photograph for an e-commerce website: ${input.prompt}`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
