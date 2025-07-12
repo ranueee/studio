@@ -65,8 +65,8 @@ export default function CommunityPage() {
     };
 
     const handleCreatePost = () => {
-        if (mediaPreviews.length === 0) {
-            toast({ variant: 'destructive', title: 'Missing Photo/Video', description: 'Please add at least one photo or video to your post.' });
+        if (mediaPreviews.length === 0 && caption.trim() === '') {
+            toast({ variant: 'destructive', title: 'Empty Post', description: 'Please add a caption or media to your post.' });
             return;
         }
 
@@ -311,7 +311,7 @@ export default function CommunityPage() {
                         </div>
                     </ScrollArea>
                     <DialogFooter className="p-4 pt-0 border-t">
-                        <Button onClick={handleCreatePost} className="w-full" disabled={mediaPreviews.length === 0}>Post</Button>
+                        <Button onClick={handleCreatePost} className="w-full" disabled={mediaPreviews.length === 0 && caption.trim() === ''}>Post</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

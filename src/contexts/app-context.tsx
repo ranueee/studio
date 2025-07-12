@@ -123,22 +123,24 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to hydrate state from localStorage on client-side
   useEffect(() => {
-    const saved = localStorage.getItem('appState');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Ensure initial posts/albums are present if local storage is empty on that front
-        if (!parsed.posts || parsed.posts.length === 0) {
-            parsed.posts = initialPosts;
+    try {
+        const saved = localStorage.getItem('appState');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+             // Ensure initial posts/albums are present if local storage is empty on that front
+            if (!parsed.posts || parsed.posts.length === 0) {
+                parsed.posts = initialPosts;
+            }
+             if (!parsed.albums || parsed.albums.length === 0) {
+                parsed.albums = initialAlbums;
+            }
+            setState(parsed);
+        } else {
+            setState(defaultState);
         }
-         if (!parsed.albums || parsed.albums.length === 0) {
-            parsed.albums = initialAlbums;
-        }
-        setState(parsed);
-      } catch (e) {
+    } catch (e) {
         console.error("Failed to parse saved state, using default.", e);
         setState(defaultState);
-      }
     }
     setIsHydrated(true);
   }, []);
@@ -222,7 +224,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
               // Update existing album
               albums = albums.map(a => 
                   a.id === newPost.albumId 
-                  ? { ...a, postCount: a.postCount + 1, coverImage: newPost.mediaUrls[0] }
+                  ? { ...a, postCount: a.postCount + 1, coverImage: newPost.mediaUrls[0] || a.coverImage }
                   : a
               );
           } else {
@@ -232,7 +234,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
                   name: newPost.albumName,
                   location: newPost.location,
                   postCount: 1,
-                  coverImage: newPost.mediaUrls[0],
+                  coverImage: newPost.mediaUrls[0] || 'https://placehold.co/600x400.png',
               };
               albums = [album, ...albums];
           }
