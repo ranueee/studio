@@ -8,6 +8,7 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Heart, MessageCircle, Share2, Globe, Lock, ArrowLeft, Copy, Trash2, MoreVertical, Edit, Video } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
@@ -43,7 +45,9 @@ let initialPosts: Post[] = [
         visibility: 'Public',
         timestamp: new Date('2023-10-26T18:25:43.511Z'),
         likes: 12,
-        comments: [],
+        comments: [
+            { id: 1, user: { name: 'Trailblazer Tom' }, text: 'Amazing shot!' }
+        ],
     },
     {
         id: 2,
@@ -99,6 +103,12 @@ let initialPosts: Post[] = [
     },
 ];
 
+type Comment = {
+    id: number;
+    user: { name: string; };
+    text: string;
+};
+
 type Post = {
     id: number;
     user: { name: string; avatar: string; };
@@ -111,7 +121,7 @@ type Post = {
     visibility: 'Public' | 'Private';
     timestamp: Date;
     likes: number;
-    comments: any[];
+    comments: Comment[];
 };
 
 export default function AlbumDetailPage() {
@@ -127,6 +137,11 @@ export default function AlbumDetailPage() {
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [editedCaption, setEditedCaption] = useState('');
     const { toast } = useToast();
+
+    // States for interactive elements
+    const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+    const [commentingOnPostId, setCommentingOnPostId] = useState<number | null>(null);
+    const [commentText, setCommentText] = useState('');
 
     const fetchAlbumData = () => {
         setLoading(true);
@@ -160,9 +175,7 @@ export default function AlbumDetailPage() {
     }
 
     const handleDeletePost = (postId: number) => {
-        // Simulate deleting from the "database"
         initialPosts = initialPosts.filter(p => p.id !== postId);
-        // Update the state to re-render
         fetchAlbumData();
         toast({
             title: "Post Deleted",
@@ -178,16 +191,11 @@ export default function AlbumDetailPage() {
 
     const handleEditPost = () => {
         if (!editingPost) return;
-
-        // Simulate updating the "database"
         const postIndex = initialPosts.findIndex(p => p.id === editingPost.id);
         if (postIndex > -1) {
             initialPosts[postIndex].caption = editedCaption;
         }
-
-        // Update state to re-render
         setPosts(posts.map(p => p.id === editingPost.id ? { ...p, caption: editedCaption } : p));
-        
         setEditModalOpen(false);
         setEditingPost(null);
         setEditedCaption('');
@@ -196,6 +204,61 @@ export default function AlbumDetailPage() {
             description: "Your post caption has been updated.",
         });
     }
+
+    const handleLike = (postId: number) => {
+        const newLikedPosts = new Set(likedPosts);
+        const isLiked = newLikedPosts.has(postId);
+
+        setPosts(posts.map(p => {
+            if (p.id === postId) {
+                if (isLiked) {
+                    newLikedPosts.delete(postId);
+                    return { ...p, likes: p.likes - 1 };
+                } else {
+                    newLikedPosts.add(postId);
+                    return { ...p, likes: p.likes + 1 };
+                }
+            }
+            return p;
+        }));
+        setLikedPosts(newLikedPosts);
+    }
+
+    const handleAddComment = (postId: number) => {
+        if (!commentText.trim()) return;
+        
+        const newComment: Comment = {
+            id: Date.now(),
+            user: { name: 'Eco-Explorer' }, // Assuming the current user
+            text: commentText,
+        };
+
+        setPosts(posts.map(p => {
+            if (p.id === postId) {
+                return { ...p, comments: [...p.comments, newComment] };
+            }
+            return p;
+        }));
+
+        // Also update the "database"
+        const postIndex = initialPosts.findIndex(p => p.id === postId);
+        if (postIndex > -1) {
+            initialPosts[postIndex].comments.push(newComment);
+        }
+
+        setCommentText('');
+        setCommentingOnPostId(null);
+    }
+
+    const toggleCommentSection = (postId: number) => {
+        if (commentingOnPostId === postId) {
+            setCommentingOnPostId(null);
+        } else {
+            setCommentingOnPostId(postId);
+            setCommentText(''); // Reset text when switching
+        }
+    }
+
 
     return (
         <AppShell>
@@ -275,13 +338,13 @@ export default function AlbumDetailPage() {
                                      <p className="p-4 text-sm">{post.caption}</p>
                                 )}
                             </CardContent>
-                            <CardFooter className="p-2 border-t">
+                            <CardFooter className="p-2 border-t flex-col items-start">
                                 <div className="flex w-full justify-around">
-                                    <Button variant="ghost" className="flex-1">
-                                        <Heart className="mr-2" />
-                                        Like
+                                    <Button variant="ghost" className="flex-1" onClick={() => handleLike(post.id)}>
+                                        <Heart className={cn("mr-2", likedPosts.has(post.id) && "fill-red-500 text-red-500")} />
+                                        {post.likes} {post.likes === 1 ? 'Like' : 'Likes'}
                                     </Button>
-                                    <Button variant="ghost" className="flex-1">
+                                    <Button variant="ghost" className="flex-1" onClick={() => toggleCommentSection(post.id)}>
                                         <MessageCircle className="mr-2" />
                                         Comment
                                     </Button>
@@ -290,6 +353,32 @@ export default function AlbumDetailPage() {
                                         Share
                                     </Button>
                                 </div>
+                                
+                                {(post.comments.length > 0 || commentingOnPostId === post.id) && <Separator className="my-2" />}
+                                
+                                <div className="w-full px-4 pb-2 space-y-3">
+                                    {/* Existing Comments */}
+                                    {post.comments.map(comment => (
+                                        <div key={comment.id} className="text-sm flex gap-2">
+                                            <span className="font-semibold">{comment.user.name}:</span>
+                                            <span>{comment.text}</span>
+                                        </div>
+                                    ))}
+
+                                    {/* Comment Input */}
+                                    {commentingOnPostId === post.id && (
+                                        <div className="flex items-center gap-2 pt-2">
+                                            <Input 
+                                                placeholder="Add a comment..." 
+                                                value={commentText} 
+                                                onChange={(e) => setCommentText(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                                            />
+                                            <Button size="sm" onClick={() => handleAddComment(post.id)}>Post</Button>
+                                        </div>
+                                    )}
+                                </div>
+
                             </CardFooter>
                             </>
                         ) : (
@@ -374,5 +463,3 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
-
-    
