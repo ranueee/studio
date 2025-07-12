@@ -17,56 +17,56 @@ const pois = [
   // Bolinao
   { id: 'patar-beach', name: 'Patar Beach', pos: { lat: 16.3263, lng: 119.7834 }, icon: Waves, rewards: { xp: 30, eclb: 5 }, challenge: { text: 'Spot 3 native birds', xp: 60, eclb: 15 }, desc: 'Known for its creamy-white sand and clear waters, a beautiful community-managed beach.', image: 'https://placehold.co/600x400.png', hint: 'philippines beach' },
   { id: 'enchanted-cave', name: 'Enchanted Cave', pos: { lat: 16.3683, lng: 119.8210 }, icon: HelpCircle, rewards: { xp: 40, eclb: 8 }, challenge: { text: 'Photo documentation of cave formations', xp: 80, eclb: 20 }, desc: 'A hidden underground cave with a natural freshwater pool.', image: 'https://placehold.co/600x400.png', hint: 'philippines cave' },
-  { id: 'bolinao-falls', name: 'Bolinao Falls', pos: { lat: 16.345, lng: 119.865 }, icon: Droplets, rewards: { xp: 35, eclb: 7 }, challenge: { text: 'Take a plastic-free picnic', xp: 70, eclb: 18 }, desc: 'A series of three beautiful waterfalls with refreshing turquoise waters.', image: 'https://placehold.co/600x400.png', hint: 'philippines waterfall' },
-  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', pos: { lat: 16.313, lng: 119.780 }, icon: Building, rewards: { xp: 25, eclb: 4 }, challenge: { text: 'Learn about its history', xp: 50, eclb: 12 }, desc: 'One of the tallest lighthouses in the Philippines, offering panoramic views.', image: 'https://placehold.co/600x400.png', hint: 'philippines lighthouse' },
+  { id: 'bolinao-falls', name: 'Bolinao Falls', pos: { lat: 16.3450, lng: 119.8650 }, icon: Droplets, rewards: { xp: 35, eclb: 7 }, challenge: { text: 'Take a plastic-free picnic', xp: 70, eclb: 18 }, desc: 'A series of three beautiful waterfalls with refreshing turquoise waters.', image: 'https://placehold.co/600x400.png', hint: 'philippines waterfall' },
+  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', pos: { lat: 16.3130, lng: 119.7800 }, icon: Building, rewards: { xp: 25, eclb: 4 }, challenge: { text: 'Learn about its history', xp: 50, eclb: 12 }, desc: 'One of the tallest lighthouses in the Philippines, offering panoramic views.', image: 'https://placehold.co/600x400.png', hint: 'philippines lighthouse' },
   { id: 'sungayan-grill', name: 'Sungayan Grill', pos: { lat: 16.3888, lng: 119.9234 }, icon: Utensils, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Try the "inihaw na sungayan"', xp: 40, eclb: 10 }, desc: 'A floating restaurant on the Balingasay River, famous for its fresh seafood and unique dining experience.', image: 'https://placehold.co/600x400.png', hint: 'floating restaurant philippines' },
 
   // Alaminos
   { id: 'hundred-islands', name: 'Hundred Islands National Park', pos: { lat: 16.1953, lng: 119.9831 }, icon: Star, rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
   
   // Anda
-  { id: 'tara-falls', name: 'Tara Falls', pos: { lat: 16.291, lng: 120.038 }, icon: Droplets, rewards: { xp: 30, eclb: 6 }, challenge: { text: 'Identify local flora', xp: 60, eclb: 15 }, desc: 'A serene waterfall nestled in the forest, perfect for a quiet retreat.', image: 'https://placehold.co/600x400.png', hint: 'serene waterfall' },
+  { id: 'tara-falls', name: 'Tara Falls', pos: { lat: 16.2910, lng: 120.0380 }, icon: Droplets, rewards: { xp: 30, eclb: 6 }, challenge: { text: 'Identify local flora', xp: 60, eclb: 15 }, desc: 'A serene waterfall nestled in the forest, perfect for a quiet retreat.', image: 'https://placehold.co/600x400.png', hint: 'serene waterfall' },
   { id: 'tondol-beach', name: 'Tondol Beach', pos: { lat: 16.3262, lng: 120.0373 }, icon: Waves, rewards: { xp: 30, eclb: 5 }, challenge: { text: 'Build a sandcastle', xp: 60, eclb: 15 }, desc: 'Dubbed the "Little Boracay" of the North, known for its long sandbar and shallow waters.', image: 'https://placehold.co/600x400.png', hint: 'white sandbar beach' },
 
   // San Fabian
-  { id: 'san-fabian-beach', name: 'San Fabian Beach', pos: { lat: 16.136, lng: 120.407 }, icon: Waves, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Participate in a beach cleanup', xp: 40, eclb: 10 }, desc: 'A long stretch of grey sand beach popular with locals.', image: 'https://placehold.co/600x400.png', hint: 'grey sand beach' },
+  { id: 'san-fabian-beach', name: 'San Fabian Beach', pos: { lat: 16.1360, lng: 120.4070 }, icon: Waves, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Participate in a beach cleanup', xp: 40, eclb: 10 }, desc: 'A long stretch of grey sand beach popular with locals.', image: 'https://placehold.co/600x400.png', hint: 'grey sand beach' },
   
   // Manaoag
-  { id: 'manaoag-church', name: 'Our Lady of Manaoag Church', pos: { lat: 16.044, lng: 120.489 }, icon: History, rewards: { xp: 15, eclb: 2 }, challenge: { text: 'Observe a moment of silence', xp: 30, eclb: 8 }, desc: 'A major Roman Catholic pilgrimage site, home to the image of Our Lady of Manaoag.', image: 'https://placehold.co/600x400.png', hint: 'historic church' },
+  { id: 'manaoag-church', name: 'Our Lady of Manaoag Church', pos: { lat: 16.0440, lng: 120.4890 }, icon: History, rewards: { xp: 15, eclb: 2 }, challenge: { text: 'Observe a moment of silence', xp: 30, eclb: 8 }, desc: 'A major Roman Catholic pilgrimage site, home to the image of Our Lady of Manaoag.', image: 'https://placehold.co/600x400.png', hint: 'historic church' },
 
   // San Nicolas
-  { id: 'ampucao-dike', name: 'Ampucao Dike Eco-Park', pos: { lat: 16.083, lng: 120.784 }, icon: Sprout, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Plant a tree seedling', xp: 50, eclb: 15 }, desc: 'A man-made dike turned into a park, offering views of the Caraballo Mountains.', image: 'https://placehold.co/600x400.png', hint: 'eco park mountain' },
+  { id: 'ampucao-dike', name: 'Ampucao Dike Eco-Park', pos: { lat: 16.0830, lng: 120.7840 }, icon: Sprout, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Plant a tree seedling', xp: 50, eclb: 15 }, desc: 'A man-made dike turned into a park, offering views of the Caraballo Mountains.', image: 'https://placehold.co/600x400.png', hint: 'eco park mountain' },
 
   // Tayug
-  { id: 'tayug-sunflower-maze', name: 'Tayug Sunflower Maze', pos: { lat: 16.027, lng: 120.750 }, icon: Sprout, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Learn about sunflower farming', xp: 40, eclb: 10 }, desc: 'A seasonal attraction featuring a maze made of sunflowers.', image: 'https://placehold.co/600x400.png', hint: 'sunflower field' },
+  { id: 'tayug-sunflower-maze', name: 'Tayug Sunflower Maze', pos: { lat: 16.0270, lng: 120.7500 }, icon: Sprout, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Learn about sunflower farming', xp: 40, eclb: 10 }, desc: 'A seasonal attraction featuring a maze made of sunflowers.', image: 'https://placehold.co/600x400.png', hint: 'sunflower field' },
 
   // Lingayen
-  { id: 'lingayen-beachfront', name: 'Lingayen Beachfront', pos: { lat: 16.033, lng: 120.233 }, icon: Anchor, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Learn about the WWII landings', xp: 40, eclb: 10 }, desc: 'A historic gulf known for its long beach park and as a WWII landing site.', image: 'https://placehold.co/600x400.png', hint: 'calm gulf beach' },
+  { id: 'lingayen-beachfront', name: 'Lingayen Beachfront', pos: { lat: 16.0330, lng: 120.2330 }, icon: Anchor, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Learn about the WWII landings', xp: 40, eclb: 10 }, desc: 'A historic gulf known for its long beach park and as a WWII landing site.', image: 'https://placehold.co/600x400.png', hint: 'calm gulf beach' },
   { id: 'pangasinan-capitol', name: 'Pangasinan Provincial Capitol', pos: { lat: 16.0245, lng: 120.2315 }, icon: Building, rewards: { xp: 10, eclb: 1 }, challenge: { text: 'Appreciate the neo-classical architecture', xp: 20, eclb: 5 }, desc: 'An impressive government building and a historical landmark in Lingayen.', image: 'https://placehold.co/600x400.png', hint: 'government building' },
 
   // Dasol
-  { id: 'tambo-tambo-beach', name: 'Tambo-Tambo Beach', pos: { lat: 15.933, lng: 119.866 }, icon: Waves, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Find a unique seashell', xp: 50, eclb: 12 }, desc: 'A quiet and pristine beach with golden sand, perfect for relaxation.', image: 'https://placehold.co/600x400.png', hint: 'golden sand beach' },
+  { id: 'tambo-tambo-beach', name: 'Tambo-Tambo Beach', pos: { lat: 15.9330, lng: 119.8660 }, icon: Waves, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Find a unique seashell', xp: 50, eclb: 12 }, desc: 'A quiet and pristine beach with golden sand, perfect for relaxation.', image: 'https://placehold.co/600x400.png', hint: 'golden sand beach' },
   
   // Burgos
-  { id: 'cabongaoan-beach', name: 'Cabongaoan Beach (Death Pool)', pos: { lat: 16.059, lng: 119.837 }, icon: Waves, rewards: { xp: 35, eclb: 7 }, challenge: { text: 'Safely take a photo of the "Death Pool"', xp: 70, eclb: 18 }, desc: 'Famous for its white sand and a natural tidal pool known as the "Death Pool".', image: 'https://placehold.co/600x400.png', hint: 'natural tidal pool' },
+  { id: 'cabongaoan-beach', name: 'Cabongaoan Beach (Death Pool)', pos: { lat: 16.0590, lng: 119.8370 }, icon: Waves, rewards: { xp: 35, eclb: 7 }, challenge: { text: 'Safely take a photo of the "Death Pool"', xp: 70, eclb: 18 }, desc: 'Famous for its white sand and a natural tidal pool known as the "Death Pool".', image: 'https://placehold.co/600x400.png', hint: 'natural tidal pool' },
 
   // Urbiztondo
-  { id: 'binongey-farm', name: 'Binongey Farm & Park', pos: { lat: 15.823, lng: 120.370 }, icon: Sprout, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Try their fresh carabao milk', xp: 40, eclb: 10 }, desc: 'An agri-tourism park offering fresh produce, farm activities, and a relaxing environment.', image: 'https://placehold.co/600x400.png', hint: 'farm park philippines' },
+  { id: 'binongey-farm', name: 'Binongey Farm & Park', pos: { lat: 15.8230, lng: 120.3700 }, icon: Sprout, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Try their fresh carabao milk', xp: 40, eclb: 10 }, desc: 'An agri-tourism park offering fresh produce, farm activities, and a relaxing environment.', image: 'https://placehold.co/600x400.png', hint: 'farm park philippines' },
   
   // Dagupan
-  { id: 'dagupan-river-cruise', name: 'Dagupan River Cruise', pos: { lat: 16.045, lng: 120.336 }, icon: Sailboat, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Spot a local fishing boat', xp: 50, eclb: 12 }, desc: 'Explore the city\'s river systems and see the bangus (milkfish) farms up close.', image: 'https://placehold.co/600x400.png', hint: 'river cruise boat' },
-  { id: 'matutinas-seafood', name: 'Matutina\'s Seafood Restaurant', pos: { lat: 16.090, lng: 120.336 }, icon: Utensils, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Taste the famous "pigar-pigar"', xp: 40, eclb: 10 }, desc: 'A highly-rated restaurant in Dagupan serving classic Pangasinan dishes and fresh seafood.', image: 'https://placehold.co/600x400.png', hint: 'seafood restaurant table' },
-  { id: 'dagupeña-restaurant', name: 'Dagupeña Restaurant', pos: { lat: 16.042, lng: 120.338 }, icon: Utensils, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Try their Kaleskes soup', xp: 40, eclb: 10 }, desc: 'A beloved local eatery famous for authentic Pangasinan comfort food like Kaleskes and Pigar-Pigar.', image: 'https://placehold.co/600x400.png', hint: 'local filipino restaurant' },
+  { id: 'dagupan-river-cruise', name: 'Dagupan River Cruise', pos: { lat: 16.0450, lng: 120.3360 }, icon: Sailboat, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Spot a local fishing boat', xp: 50, eclb: 12 }, desc: 'Explore the city\'s river systems and see the bangus (milkfish) farms up close.', image: 'https://placehold.co/600x400.png', hint: 'river cruise boat' },
+  { id: 'matutinas-seafood', name: 'Matutina\'s Seafood Restaurant', pos: { lat: 16.0900, lng: 120.3360 }, icon: Utensils, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Taste the famous "pigar-pigar"', xp: 40, eclb: 10 }, desc: 'A highly-rated restaurant in Dagupan serving classic Pangasinan dishes and fresh seafood.', image: 'https://placehold.co/600x400.png', hint: 'seafood restaurant table' },
+  { id: 'dagupeña-restaurant', name: 'Dagupeña Restaurant', pos: { lat: 16.0420, lng: 120.3380 }, icon: Utensils, rewards: { xp: 20, eclb: 3 }, challenge: { text: 'Try their Kaleskes soup', xp: 40, eclb: 10 }, desc: 'A beloved local eatery famous for authentic Pangasinan comfort food like Kaleskes and Pigar-Pigar.', image: 'https://placehold.co/600x400.png', hint: 'local filipino restaurant' },
 
   // Mangatarem
-  { id: 'manleluag-spring', name: 'Manleluag Spring National Park', pos: { lat: 15.790, lng: 120.301 }, icon: Sprout, rewards: { xp: 30, eclb: 6 }, challenge: { text: 'Take a dip in the therapeutic waters', xp: 60, eclb: 16 }, desc: 'A protected area with hot springs known for their therapeutic properties.', image: 'https://placehold.co/600x400.png', hint: 'natural hot spring forest' },
-  { id: 'pocal-river', name: 'Pacalat River', pos: { lat: 15.824, lng: 120.264 }, icon: Waves, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Find a smooth, flat stone', xp: 50, eclb: 12 }, desc: 'A clean and scenic river with clear waters, popular for picnics and swimming.', image: 'https://placehold.co/600x400.png', hint: 'clean river philippines' },
+  { id: 'manleluag-spring', name: 'Manleluag Spring National Park', pos: { lat: 15.7900, lng: 120.3010 }, icon: Sprout, rewards: { xp: 30, eclb: 6 }, challenge: { text: 'Take a dip in the therapeutic waters', xp: 60, eclb: 16 }, desc: 'A protected area with hot springs known for their therapeutic properties.', image: 'https://placehold.co/600x400.png', hint: 'natural hot spring forest' },
+  { id: 'pacalat-river', name: 'Pacalat River', pos: { lat: 15.8240, lng: 120.2640 }, icon: Waves, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Find a smooth, flat stone', xp: 50, eclb: 12 }, desc: 'A clean and scenic river with clear waters, popular for picnics and swimming.', image: 'https://placehold.co/600x400.png', hint: 'clean river philippines' },
 
   // Bani
-  { id: 'surip-beach', name: 'Surip Beach', pos: { lat: 16.216, lng: 119.827 }, icon: Waves, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Watch the sunset', xp: 50, eclb: 12 }, desc: 'A quiet beach with a unique, pebbly shore and clear waters.', image: 'https://placehold.co/600x400.png', hint: 'pebble beach sunset' },
+  { id: 'surip-beach', name: 'Surip Beach', pos: { lat: 16.2160, lng: 119.8270 }, icon: Waves, rewards: { xp: 25, eclb: 5 }, challenge: { text: 'Watch the sunset', xp: 50, eclb: 12 }, desc: 'A quiet beach with a unique, pebbly shore and clear waters.', image: 'https://placehold.co/600x400.png', hint: 'pebble beach sunset' },
 
   // San Quintin
-  { id: 'maples-river', name: 'Maples River', pos: { lat: 15.986, lng: 120.825 }, icon: Waves, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Listen to the sound of the flowing water', xp: 40, eclb: 10 }, desc: 'A serene river offering a peaceful retreat and a spot for local fishing.', image: 'https://placehold.co/600x400.png', hint: 'serene river fishing' },
+  { id: 'maples-river', name: 'Maples River', pos: { lat: 15.9860, lng: 120.8250 }, icon: Waves, rewards: { xp: 20, eclb: 4 }, challenge: { text: 'Listen to the sound of the flowing water', xp: 40, eclb: 10 }, desc: 'A serene river offering a peaceful retreat and a spot for local fishing.', image: 'https://placehold.co/600x400.png', hint: 'serene river fishing' },
 ];
 
 
@@ -159,7 +159,7 @@ export default function MapPage() {
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
         style={{width: '100%', height: '100%'}}
-        mapStyle="mapbox://styles/mapbox/outdoors-v12"
+        mapStyle="mapbox://styles/mapbox/dark-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
@@ -192,7 +192,7 @@ export default function MapPage() {
     <AppShell>
       <div className="relative w-full h-full bg-black">
         {renderMap()}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0)_0%,rgba(0,0,0,0.8)_60%,rgba(0,0,0,1)_90%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.9)_50%,rgba(0,0,0,1)_80%)]" />
       </div>
 
       {/* Location Details Bottom Sheet */}
@@ -269,5 +269,3 @@ export default function MapPage() {
     </AppShell>
   );
 }
-
-    
