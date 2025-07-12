@@ -25,9 +25,7 @@ import { cn } from '@/lib/utils';
 const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603'; // Your $ECLB token
 const VICTION_TESTNET_CHAIN_ID = '0x59'; // 89 in hex for Viction Testnet
 
-// A list of other tokens to check on Viction Testnet (example: Wrapped VIC)
 const TOKEN_CONTRACTS = [
-    { address: '0x2Eaa64627e191b79155a5b5074A54530403a3A2A', symbol: 'WVIC', name: 'Wrapped VIC', icon: VictionLogo },
     { address: ECLB_TOKEN_CONTRACT_ADDRESS, symbol: '$ECLB', name: 'EcoLakbay Token', icon: TokenIcon }
 ];
 
@@ -73,14 +71,6 @@ export default function ProfilePage() {
   const fetchAllBalances = async (provider: ethers.BrowserProvider, address: string) => {
       setIsRefreshing(true);
       try {
-          const nativeBalance = await provider.getBalance(address);
-          const nativeToken: TokenBalance = {
-              symbol: 'VIC',
-              name: 'Viction',
-              balance: parseFloat(ethers.formatEther(nativeBalance)).toFixed(4),
-              icon: VictionLogo
-          };
-
           const tokenBalances = await Promise.all(
               TOKEN_CONTRACTS.map(async (token) => {
                   try {
@@ -100,7 +90,7 @@ export default function ProfilePage() {
               })
           );
           
-          setBalances([nativeToken, ...tokenBalances]);
+          setBalances(tokenBalances);
 
       } catch (e) {
           console.error("Could not fetch balances", e);
@@ -301,11 +291,11 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Token Balances</Label>
+                      <Label>Token Balance</Label>
                       {isRefreshing && balances.length === 0 ? (
                            <div className="text-center p-4">
                                 <Loader2 className="w-6 h-6 animate-spin mx-auto"/>
-                                <p className="text-sm text-muted-foreground mt-2">Fetching balances...</p>
+                                <p className="text-sm text-muted-foreground mt-2">Fetching balance...</p>
                            </div>
                       ) : (
                         <div className="border rounded-lg p-2 space-y-1">
