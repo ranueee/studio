@@ -1,13 +1,14 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map, Zap, Store, User, Users } from 'lucide-react';
+import { Map, Luggage, Store, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/map', label: 'Map', icon: Map },
-  { href: '/quests', label: 'Itinerary', icon: Zap },
+  { href: '/quests', label: 'Itinerary', icon: Luggage },
   { href: '/community', label: 'Community', icon: Users },
   { href: '/marketplace', label: 'Marketplace', icon: Store },
   { href: '/profile', label: 'Profile', icon: User },
