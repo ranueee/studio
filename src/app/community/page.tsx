@@ -357,7 +357,7 @@ export default function CommunityPage() {
 
                         {newPostMedia && (
                             <>
-                                <Select value={selectedAlbum} onValueChange={setSelectedAlbum}>
+                                <Select value={selectedAlbum} onValueChange={setSelectedAlbum} disabled={createAlbumSwitch}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select an album (optional)" />
                                     </SelectTrigger>
@@ -369,7 +369,7 @@ export default function CommunityPage() {
                                 </Select>
 
                                 <div className="flex items-center space-x-2">
-                                    <Switch id="create-album-switch" checked={createAlbumSwitch} onCheckedChange={setCreateAlbumSwitch} disabled={!!selectedAlbum} />
+                                    <Switch id="create-album-switch" checked={createAlbumSwitch} onCheckedChange={setCreateAlbumSwitch} />
                                     <Label htmlFor="create-album-switch">Create a new album for this post</Label>
                                 </div>
 
@@ -409,5 +409,3 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
-
-    
