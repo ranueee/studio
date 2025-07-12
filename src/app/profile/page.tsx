@@ -14,17 +14,17 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy } from 'lucide-react';
+import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from '@/components/qr-code';
 
 
-// NOTE: Replace with your actual deployed $ECLB token contract address
+// NOTE: This is your actual deployed $ECLB token contract address
 const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603';
 const VICTION_TESTNET_CHAIN_ID = '0x58'; // 88 in hex
 
-// Minimal ABI to get the token balance and send tokens
+// Minimal ABI to get the token balance, decimals, and send tokens
 const erc20Abi = [
     "function balanceOf(address owner) view returns (uint256)",
     "function decimals() view returns (uint8)",
@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [tokenBalance, setTokenBalance] = useState<string>('0.00');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [isSendModalOpen, setSendModalOpen] = useState(false);
   const [isReceiveModalOpen, setReceiveModalOpen] = useState(false);
   const [sendAmount, setSendAmount] = useState('');
@@ -55,19 +56,19 @@ export default function ProfilePage() {
 
   const fetchBalance = async (provider: ethers.BrowserProvider, account: string) => {
     try {
-        if (ECLB_TOKEN_CONTRACT_ADDRESS === '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603') {
-            console.warn("Using placeholder token balance. Replace `ECLB_TOKEN_CONTRACT_ADDRESS` in profile page.");
-            setTokenBalance("1,234.56"); // Placeholder balance for UI development
-        } else {
-            const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
-            const balance = await tokenContract.balanceOf(account);
-            const decimals = await tokenContract.decimals();
-            const formattedBalance = ethers.formatUnits(balance, decimals);
-            setTokenBalance(parseFloat(formattedBalance).toFixed(2));
-        }
+        const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
+        const balance = await tokenContract.balanceOf(account);
+        const decimals = await tokenContract.decimals();
+        const formattedBalance = ethers.formatUnits(balance, decimals);
+        setTokenBalance(parseFloat(formattedBalance).toFixed(2));
     } catch (e) {
         console.error("Could not fetch balance", e);
         setTokenBalance("Error");
+        toast({
+            variant: "destructive",
+            title: "Balance Error",
+            description: "Could not fetch token balance. Make sure the contract is deployed on Viction Testnet.",
+        });
     }
   };
 
@@ -103,7 +104,6 @@ export default function ProfilePage() {
             });
           } catch (switchError: any) {
              if (switchError.code === 4902) {
-                 // Add Viction Testnet if not present
                  await window.ethereum.request({
                     method: 'wallet_addEthereumChain',
                     params: [{
@@ -120,7 +120,6 @@ export default function ProfilePage() {
           }
       }
 
-      // Re-initialize provider after network switch
       const newProvider = new ethers.BrowserProvider(window.ethereum);
       const accounts = await newProvider.send("eth_requestAccounts", []);
       
@@ -155,18 +154,60 @@ export default function ProfilePage() {
   };
 
   const handleSend = async () => {
-      // This is a placeholder for the actual transaction logic
-      if (!recipientAddress || !sendAmount) {
+      if (!recipientAddress || !sendAmount || !walletAddress) {
           toast({ variant: 'destructive', title: 'Error', description: 'Please fill in all fields.' });
           return;
       }
-      setSendModalOpen(false);
-      toast({
-          title: "Transaction Sent (Simulation)",
-          description: `You sent ${sendAmount} $ECLB to ${formatAddress(recipientAddress)}.`,
+      if (!ethers.isAddress(recipientAddress)) {
+          toast({ variant: 'destructive', title: 'Invalid Address', description: 'The recipient address is not a valid Ethereum address.' });
+          return;
+      }
+
+      setIsSending(true);
+      const { dismiss } = toast({
+          title: "Transaction Pending",
+          description: "Waiting for confirmation from MetaMask...",
       });
-      setRecipientAddress('');
-      setSendAmount('');
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, signer);
+        
+        const decimals = await tokenContract.decimals();
+        const amountToSend = ethers.parseUnits(sendAmount, decimals);
+
+        const tx = await tokenContract.transfer(recipientAddress, amountToSend);
+        
+        dismiss();
+        toast({
+            title: "Transaction Sent",
+            description: "Your transaction is being processed. View on Vicscan.",
+        });
+
+        await tx.wait();
+
+        toast({
+            title: "Transaction Confirmed!",
+            description: `Successfully sent ${sendAmount} $ECLB.`,
+        });
+
+        await fetchBalance(provider, walletAddress);
+        setSendModalOpen(false);
+        setRecipientAddress('');
+        setSendAmount('');
+
+      } catch (error: any) {
+        dismiss();
+        console.error("Transaction failed", error);
+        toast({
+            variant: 'destructive',
+            title: 'Transaction Failed',
+            description: error?.reason || "An error occurred during the transaction.",
+        });
+      } finally {
+        setIsSending(false);
+      }
   };
 
 
@@ -317,7 +358,7 @@ export default function ProfilePage() {
             <DialogHeader>
                 <DialogTitle>Send $ECLB</DialogTitle>
                 <DialogDescription>
-                    Enter the recipient's address and the amount to send.
+                    Enter the recipient's address and the amount to send. This action is irreversible.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
@@ -331,8 +372,11 @@ export default function ProfilePage() {
                 </div>
             </div>
             <DialogFooter>
-                <Button variant="ghost" onClick={() => setSendModalOpen(false)}>Cancel</Button>
-                <Button onClick={handleSend}>Send</Button>
+                <Button variant="ghost" onClick={() => setSendModalOpen(false)} disabled={isSending}>Cancel</Button>
+                <Button onClick={handleSend} disabled={isSending}>
+                    {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSending ? 'Sending...' : 'Send'}
+                </Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
