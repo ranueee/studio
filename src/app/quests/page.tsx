@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { suggestOptimalEcoRoute, type SuggestOptimalEcoRouteOutput } from '@/ai/flows/suggest-route';
-import { Loader, Wand2, Route, Trees, CheckCircle, MapPin, BedDouble, Utensils, PiggyBank, CalendarDays } from 'lucide-react';
+import { Loader, Wand2, Route, Trees, CheckCircle, MapPin, BedDouble, Utensils, PiggyBank, CalendarDays, Clock, Coffee, Sun, Moon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 export default function ItineraryPage() {
@@ -143,11 +144,19 @@ export default function ItineraryPage() {
                             <CalendarDays className="w-5 h-5 text-muted-foreground"/>
                             Day {day.day}: {day.title}
                         </h3>
-                        <ul className="space-y-2 pl-2">
+                        <ul className="space-y-3 pl-2">
                             {day.activities.map((activity, index) => (
-                                <li key={index} className="flex items-start gap-3">
-                                    <MapPin className="w-4 h-4 text-primary mt-1 shrink-0"/>
-                                    <span>{activity}</span>
+                                <li key={index} className="flex items-start gap-4">
+                                    <div className="w-24 text-right text-sm font-semibold text-primary shrink-0">
+                                        <Clock className="w-4 h-4 inline-block mr-1 align-middle"/>
+                                        {activity.time}
+                                    </div>
+                                    <div className="flex-1 border-l-2 border-primary/20 pl-4 pb-2">
+                                        <div className="flex items-start gap-3">
+                                            <MapPin className="w-4 h-4 text-primary mt-1 shrink-0"/>
+                                            <span>{activity.description}</span>
+                                        </div>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
@@ -158,12 +167,41 @@ export default function ItineraryPage() {
                                     <p className="text-muted-foreground pl-6">{day.accommodation}</p>
                                 </div>
                             )}
-                            {day.dining && (
-                                <div className="bg-accent/20 p-3 rounded-lg">
-                                    <p className="font-semibold flex items-center gap-2"><Utensils className="w-4 h-4"/> Dining</p>
-                                    <p className="text-muted-foreground pl-6">{day.dining}</p>
-                                </div>
-                            )}
+                        </div>
+                        <div className="mt-4 space-y-3">
+                             <h4 className="font-semibold text-md flex items-center gap-2">
+                                <Utensils className="w-5 h-5 text-muted-foreground" />
+                                Dining Plan
+                             </h4>
+                             <div className="pl-6 space-y-3">
+                                {day.dining.breakfast && (
+                                    <div className="flex gap-4">
+                                        <Coffee className="w-4 h-4 mt-1 text-amber-600"/>
+                                        <div>
+                                            <p className="font-semibold">{day.dining.breakfast.restaurant} ({day.dining.breakfast.time})</p>
+                                            {day.dining.breakfast.notes && <p className="text-xs text-muted-foreground">{day.dining.breakfast.notes}</p>}
+                                        </div>
+                                    </div>
+                                )}
+                                {day.dining.lunch && (
+                                    <div className="flex gap-4">
+                                        <Sun className="w-4 h-4 mt-1 text-yellow-500"/>
+                                        <div>
+                                            <p className="font-semibold">{day.dining.lunch.restaurant} ({day.dining.lunch.time})</p>
+                                            {day.dining.lunch.notes && <p className="text-xs text-muted-foreground">{day.dining.lunch.notes}</p>}
+                                        </div>
+                                    </div>
+                                )}
+                                {day.dining.dinner && (
+                                    <div className="flex gap-4">
+                                        <Moon className="w-4 h-4 mt-1 text-indigo-400"/>
+                                        <div>
+                                            <p className="font-semibold">{day.dining.dinner.restaurant} ({day.dining.dinner.time})</p>
+                                            {day.dining.dinner.notes && <p className="text-xs text-muted-foreground">{day.dining.dinner.notes}</p>}
+                                        </div>
+                                    </div>
+                                )}
+                             </div>
                         </div>
                     </div>
                 ))}
