@@ -55,7 +55,7 @@ export default function MarketplacePage() {
           const updatedItems = await Promise.all(
               items.map(async (item) => {
                   try {
-                      const result = await generateImage({ prompt: `A product photo of ${item.title}, ${item.hint}` });
+                      const result = await generateImage({ prompt: `A high-quality product photo for an e-commerce website: ${item.description}` });
                       return { ...item, image: result.imageUrl };
                   } catch (e) {
                       console.error(`Failed to generate image for ${item.title}`, e);
