@@ -86,8 +86,6 @@ const UserLocationMarker = () => (
 );
 
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-
 export default function MapPage() {
   const { visitedPois, addXp, addBalance, addBadge, addVisitedPoi } = useApp();
   const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
@@ -181,7 +179,7 @@ export default function MapPage() {
   };
   
   const renderMap = () => {
-    if (!MAPBOX_TOKEN) {
+    if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
       return (
         <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
           <div className="max-w-md">
@@ -204,7 +202,7 @@ export default function MapPage() {
         initialViewState={viewState}
         style={{width: '100%', height: '100%'}}
         mapStyle="mapbox://styles/mapbox/outdoors-v12"
-        mapboxAccessToken={MAPBOX_TOKEN}
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         interactive={false}
       >
         {userLocation && (
@@ -316,3 +314,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
