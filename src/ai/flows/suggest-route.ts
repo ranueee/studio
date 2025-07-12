@@ -19,8 +19,8 @@ const SuggestOptimalEcoRouteInputSchema = z.object({
     .array(z.string())
     .describe('An array of available points of interest (POIs).'),
   interests: z
-    .array(z.string())
-    .describe('An array of user interests related to ecotourism.'),
+    .string()
+    .describe('A string describing the user interests and wants for their trip.'),
 });
 export type SuggestOptimalEcoRouteInput = z.infer<typeof SuggestOptimalEcoRouteInputSchema>;
 
@@ -44,22 +44,23 @@ const prompt = ai.definePrompt({
   name: 'suggestOptimalEcoRoutePrompt',
   input: {schema: SuggestOptimalEcoRouteInputSchema},
   output: {schema: SuggestOptimalEcoRouteOutputSchema},
-  prompt: `You are an expert ecotourism guide for the province of Pangasinan in the Philippines. Your task is to create an optimal travel itinerary.
+  prompt: `You are an expert ecotourism guide for the province of Pangasinan in the Philippines. Your task is to create an optimal travel itinerary based on a user's request.
 
-You will be given the user's general location, a list of available points of interest (POIs) spread across Pangasinan, and their specific interests.
+You will be given the user's general location, a list of available points of interest (POIs) spread across Pangasinan, and their request in their own words.
 
 **Context:**
 - User's General Location: {{{currentLocation}}}
 - Available POIs: {{#each availablePois}} - {{{this}}} {{/each}}
-- User's Interests: {{#each interests}} - {{{this}}} {{/each}}
+- User's Request: {{{interests}}}
 
 **Your Goal:**
-Suggest an optimal, logical route that connects 2-4 of the available POIs for a well-paced trip.
+Suggest an optimal, logical route that connects 2-4 of the available POIs for a well-paced trip that directly addresses the user's request.
 
 **Instructions:**
-1.  **Analyze Interests:** Prioritize POIs that directly match the user's interests. For example, if they like 'Pilgrimage Sites', Manaoag Church is a must. If they like 'Island Hopping', Hundred Islands is the top choice.
-2.  **Create a Logical Path:** The POIs are in different towns. Arrange the selected POIs in a sequence that makes geographical sense for travel. For instance, grouping spots in Bolinao and Anda together is logical, while jumping from Alaminos to Tayug and back to Bolinao is not efficient for a single day.
-3.  **Provide Reasoning:** In the 'reasoning' field, briefly explain *why* you chose this specific route. Mention how it aligns with the user's interests and the geographical flow of travel. For example: "This route focuses on the coastal beauty of western Pangasinan, starting with the iconic Hundred Islands and then moving to the serene beaches of Bolinao, which aligns with your interests in islands and beaches."
+1.  **Analyze Request:** Carefully read the user's request to understand their desires. They might mention specific activities (e.g., "swimming," "taking photos"), vibes ("relaxing," "adventurous"), or types of places ("beaches," "churches," "hidden gems").
+2.  **Match to POIs:** Select POIs that best match the user's stated interests. For example, if they say "I want to see the most famous beach and lighthouse," you should prioritize Patar Beach and Cape Bolinao Lighthouse. If they say "I want to go island hopping," Hundred Islands is the obvious choice.
+3.  **Create a Logical Path:** The POIs are in different towns. Arrange the selected POIs in a sequence that makes geographical sense for travel. Grouping spots in Bolinao and Anda together is logical. Jumping from Alaminos to Tayug and back to Bolinao is not efficient.
+4.  **Provide Reasoning:** In the 'reasoning' field, briefly explain *why* you chose this specific route. Mention how it aligns with their request and the geographical flow. For example: "This route focuses on the coastal beauty of western Pangasinan, starting with the iconic Hundred Islands for your island hopping adventure and then moving to the serene Patar beach for a relaxing afternoon, fulfilling your request for both adventure and relaxation."
 
 Generate the 'optimalRoute' as an array of POI names and the 'reasoning' as a descriptive string.
   `,

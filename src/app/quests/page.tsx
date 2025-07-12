@@ -4,12 +4,11 @@ import { useState } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { suggestOptimalEcoRoute, type SuggestOptimalEcoRouteOutput } from '@/ai/flows/suggest-route';
 import { Loader, Wand2, Route, Trees, CheckCircle, MapPin } from 'lucide-react';
 
-const availableInterests = ['Beaches', 'Island Hopping', 'Waterfalls', 'Cave Exploration', 'Historical Sites', 'Local Food', 'Pilgrimage Sites', 'Nature Parks', 'Farm Tourism'];
 const availablePois = [
     'Hundred Islands National Park (Alaminos)',
     'Patar Beach (Bolinao)',
@@ -24,26 +23,20 @@ const availablePois = [
     'Death Pool (Cabongaoan Beach, Burgos)'
 ];
 
-export default function QuestsPage() {
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+export default function ItineraryPage() {
+  const [interests, setInterests] = useState('');
   const [suggestedRoute, setSuggestedRoute] = useState<SuggestOptimalEcoRouteOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleInterestChange = (interest: string, checked: boolean | 'indeterminate') => {
-    setSelectedInterests(prev =>
-      checked ? [...prev, interest] : prev.filter(i => i !== interest)
-    );
-  };
-
   const handleSuggestRoute = async () => {
-    if (selectedInterests.length === 0) return;
+    if (interests.trim().length === 0) return;
     setIsLoading(true);
     setSuggestedRoute(null);
     try {
       const result = await suggestOptimalEcoRoute({
         currentLocation: 'Pangasinan, Philippines',
         availablePois,
-        interests: selectedInterests,
+        interests: interests,
       });
       setSuggestedRoute(result);
     } catch (error) {
@@ -56,37 +49,35 @@ export default function QuestsPage() {
   return (
     <AppShell>
       <div className="p-4 space-y-6">
-        <h1 className="text-3xl font-bold">AI Route Planner</h1>
-        <p className="text-muted-foreground">Let our AI guide suggest the perfect eco-adventure based on your interests.</p>
+        <h1 className="text-3xl font-bold">AI Itinerary Planner</h1>
+        <p className="text-muted-foreground">Let our AI guide suggest the perfect eco-adventure. Just tell us what you're looking for!</p>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trees className="w-6 h-6 text-primary" />
-              What are your interests?
+              Describe your ideal trip
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {availableInterests.map(interest => (
-                <div key={interest} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={interest}
-                    onCheckedChange={(checked) => handleInterestChange(interest, checked)}
-                  />
-                  <Label htmlFor={interest} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {interest}
-                  </Label>
-                </div>
-              ))}
+            <div className="grid w-full gap-1.5">
+              <Label htmlFor="interests">
+                For example: "I want a relaxing day at a beautiful beach, maybe see a waterfall if it's nearby."
+              </Label>
+              <Textarea 
+                placeholder="Type your interests here..." 
+                id="interests"
+                value={interests}
+                onChange={(e) => setInterests(e.target.value)}
+              />
             </div>
-            <Button onClick={handleSuggestRoute} disabled={isLoading || selectedInterests.length === 0} className="w-full mt-6">
+            <Button onClick={handleSuggestRoute} disabled={isLoading || interests.trim().length === 0} className="w-full mt-6">
               {isLoading ? (
                 <Loader className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Wand2 className="mr-2 h-4 w-4" />
               )}
-              Suggest a Route
+              Create Route
             </Button>
           </CardContent>
         </Card>
