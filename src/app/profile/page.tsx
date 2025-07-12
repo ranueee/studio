@@ -21,8 +21,8 @@ import { QRCodeSVG } from '@/components/qr-code';
 
 
 // NOTE: This is your actual deployed $ECLB token contract address
-const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603B';
-const VICTION_TESTNET_CHAIN_ID = '0x89'; // 89 in hex for Viction Testnet
+const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603';
+const VICTION_TESTNET_CHAIN_ID = '0x59'; // 89 in hex for Viction Testnet
 
 // Minimal ABI to get the token balance, decimals, and send tokens
 const erc20Abi = [
@@ -392,3 +392,5 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
+
+    

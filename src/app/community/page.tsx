@@ -1,34 +1,23 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AppShell } from '@/components/app-shell';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MapPin, ImagePlus, Video, Globe, Lock, Send, MoreVertical, Trash2 } from 'lucide-react';
+import { PlusCircle, MapPin, ImagePlus, Video, Globe, Lock, Send, MoreVertical, Trash2, Heart, MessageCircle, Share2, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { generateImage } from '@/ai/flows/generate-image-flow';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 let pois = [
   { id: 'hundred-islands', name: 'Hundred Islands', isAlbum: true },
@@ -103,17 +92,9 @@ type Post = {
   timestamp: Date;
 };
 
-type Album = {
-  locationId: string;
-  locationName: string;
-  posts: Post[];
-  coverImage: string;
-  imageHint?: string;
-  postCount: number;
-};
 
 export default function CommunityPage() {
-    const [albums, setAlbums] = useState<Album[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [newPostContent, setNewPostContent] = useState('');
     const [newPostLocation, setNewPostLocation] = useState('');
@@ -126,37 +107,15 @@ export default function CommunityPage() {
     const [newAlbumName, setNewAlbumName] = useState('');
     const { toast } = useToast();
 
-    const processPosts = async (postsToProcess: Post[]) => {
+    const processPosts = () => {
       setLoading(true);
-      
-      const groupedByLocation = postsToProcess.reduce((acc, post) => {
-        (acc[post.locationId] = acc[post.locationId] || []).push(post);
-        return acc;
-      }, {} as Record<string, Post[]>);
-  
-      const createdAlbums: Album[] = Object.keys(groupedByLocation)
-        .filter(locationId => pois.some(p => p.id === locationId && p.isAlbum))
-        .map(locationId => {
-            const locationPosts = groupedByLocation[locationId].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-            const locationName = pois.find(p => p.id === locationId)?.name || locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            const coverPost = locationPosts.find(p => p.image);
-
-            return {
-            locationId,
-            locationName,
-            posts: locationPosts,
-            coverImage: coverPost?.image || 'https://placehold.co/300x300.png',
-            imageHint: coverPost?.imageHint,
-            postCount: locationPosts.length,
-            };
-        }).filter(album => album.postCount > 0);
-      
-      setAlbums(createdAlbums.sort((a, b) => b.posts[0].timestamp.getTime() - a.posts[0].timestamp.getTime()));
+      const sortedPosts = [...initialPosts].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+      setPosts(sortedPosts);
       setLoading(false);
     };
 
     useEffect(() => {
-        processPosts(initialPosts);
+        processPosts();
     }, []);
 
     const resetCreateModal = () => {
@@ -220,23 +179,10 @@ export default function CommunityPage() {
         };
 
         initialPosts.unshift(newPost);
-        await processPosts([...initialPosts]);
+        processPosts();
         
         resetCreateModal();
         toast({ title: 'Post Created!', description: 'Your adventure has been shared.' });
-    };
-    
-    const handleDeleteAlbum = (locationId: string) => {
-        initialPosts = initialPosts.filter(p => p.locationId !== locationId);
-        const poiIndex = pois.findIndex(p => p.id === locationId);
-        if (poiIndex > -1) {
-            pois[poiIndex].isAlbum = false; // Keep location, but remove from album view
-        }
-        processPosts([...initialPosts]);
-        toast({
-            title: 'Album Deleted',
-            description: 'The album has been removed from your profile.',
-        })
     };
 
     const handleAddMedia = (type: 'image' | 'video') => {
@@ -246,87 +192,108 @@ export default function CommunityPage() {
             setMediaTypeToAdd(type);
         }
     };
+    
+    const getLocationName = (locationId: string) => {
+        const poi = pois.find(p => p.id === locationId);
+        return poi ? poi.name : locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
 
     return (
         <AppShell>
             <div className="p-4 space-y-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold">Community</h1>
+                    <h1 className="text-3xl font-bold">Community Feed</h1>
                     <Button onClick={() => setCreateModalOpen(true)}>
                         <PlusCircle className="mr-2" />
                         Create Post
                     </Button>
                 </div>
                 
-                {loading ? (
-                     <div className="grid grid-cols-2 gap-4">
-                        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-48 rounded-lg" />)}
-                     </div>
-                ) : albums.length > 0 ? (
-                    <>
-                    <h2 className="text-xl font-semibold">My Albums</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                    {albums.map((album) => (
-                        <div key={album.locationId} className="relative group">
-                            <Link href={`/community/album/${album.locationId}`}>
-                                <Card className="overflow-hidden h-48 flex flex-col hover:shadow-lg transition-shadow">
-                                    <div className="relative h-full">
-                                        <Image src={album.coverImage} alt={album.locationName} data-ai-hint={album.imageHint || "philippines album"} fill className="object-cover group-hover:scale-105 transition-transform" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                        <div className="absolute bottom-0 left-0 p-3 text-white">
-                                            <h3 className="font-bold">{album.locationName}</h3>
-                                            <p className="text-xs">{album.postCount} {album.postCount > 1 ? 'posts' : 'post'}</p>
-                                        </div>
+                <div className="space-y-4">
+                    {(loading ? Array.from({ length: 3 }) : posts).map((post: Post | undefined, index) => (
+                        <Card key={post?.id ?? index} className="overflow-hidden">
+                        {post ? (
+                            <>
+                            <CardHeader className="flex flex-row items-center gap-3 p-4">
+                                <Avatar>
+                                <AvatarImage src={post.user.avatar} alt={post.user.name} />
+                                <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <p className="font-semibold">{post.user.name}</p>
+                                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                        <span>{new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(post.timestamp)}</span>
+                                        <span>&middot;</span>
+                                        <Link href={`/community/album/${post.locationId}`} className="hover:underline">
+                                           <span>{getLocationName(post.locationId)}</span>
+                                        </Link>
                                     </div>
-                                </Card>
-                            </Link>
-                            <div className="absolute top-1 right-1">
-                                 <AlertDialog>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70">
-                                                <MoreVertical className="w-4 h-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem className="text-destructive">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Delete Album</span>
-                                                </DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                     <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete this album from your profile.
-                                            The posts will still exist but will be un-albumed.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteAlbum(album.locationId)} className="bg-destructive hover:bg-destructive/90">
-                                            Delete
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                                </div>
+                                <Badge variant={post.visibility === 'Public' ? 'secondary' : 'outline'}>
+                                    {post.visibility === 'Public' ? <Globe className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
+                                    {post.visibility}
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {post.image && (
+                                    <Image
+                                        src={post.image}
+                                        alt={post.caption}
+                                        width={600}
+                                        height={400}
+                                        className="w-full h-auto object-cover"
+                                        data-ai-hint={post.imageHint || "community post image"}
+                                    />
+                                )}
+                                {post.video && (
+                                     <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
+                                        <video src={post.video} controls className="w-full h-full" />
+                                    </div>
+                                )}
+                                <p className="p-4 text-sm">{post.caption}</p>
+                            </CardContent>
+                            <CardFooter className="p-2 border-t">
+                                <div className="flex w-full justify-around">
+                                    <Button variant="ghost" className="flex-1">
+                                        <Heart className="mr-2" />
+                                        Like
+                                    </Button>
+                                    <Button variant="ghost" className="flex-1">
+                                        <MessageCircle className="mr-2" />
+                                        Comment
+                                    </Button>
+                                    <Button variant="ghost" className="flex-1">
+                                        <Share2 className="mr-2" />
+                                        Share
+                                    </Button>
+                                </div>
+                            </CardFooter>
+                            </>
+                        ) : (
+                            <div className="p-4 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-[150px]" />
+                                        <Skeleton className="h-4 w-[100px]" />
+                                    </div>
+                                </div>
+                                <Skeleton className="h-[250px] w-full rounded-lg" />
+                                <Skeleton className="h-4 w-full" />
                             </div>
-                        </div>
+                        )}
+                        </Card>
                     ))}
-                    </div>
-                    </>
-                ) : (
-                    <div className="text-center text-muted-foreground py-16">
-                        <h3 className="text-lg font-semibold">No Albums Yet</h3>
-                        <p className="mt-2">Create your first post and make an album to see it here!</p>
-                        <Button variant="default" className="mt-4" onClick={() => setCreateModalOpen(true)}>
-                           Create Album
-                        </Button>
-                    </div>
-                )}
+                     {!loading && posts.length === 0 && (
+                        <div className="text-center text-muted-foreground py-16">
+                            <h3 className="text-lg font-semibold">The Feed is Quiet...</h3>
+                            <p className="mt-2">Be the first to share an adventure!</p>
+                            <Button variant="default" className="mt-4" onClick={() => setCreateModalOpen(true)}>
+                                Create Post
+                            </Button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <Dialog open={isCreateModalOpen} onOpenChange={setCreateModalOpen}>
@@ -400,3 +367,5 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
+
+    
