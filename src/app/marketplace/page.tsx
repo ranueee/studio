@@ -9,60 +9,58 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { TokenIcon } from '@/components/icons/token-icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateImage } from '@/ai/flows/generate-image-flow';
+import type { GenerateImageOutput } from '@/ai/flows/generate-image-flow';
 
-const initialItems = [
-  {
-    id: 'mango-jam',
-    title: 'Sundowners Mango Jam',
-    price: 5,
-    image: 'https://placehold.co/300x300.png',
-    hint: 'mango jam',
-  },
-  {
-    id: 'coffee-voucher',
-    title: 'Kape-tan Coffee Voucher',
-    price: 8,
-    image: 'https://placehold.co/300x300.png',
-    hint: 'cup of coffee on a cafe table',
-  },
-   {
-    id: 'bamboo-straws',
-    title: 'Eco-Friendly Bamboo Straws',
-    price: 3,
-    image: 'https://placehold.co/300x300.png',
-    hint: 'reusable bamboo straws',
-  },
-   {
-    id: 'local-keychain',
-    title: 'Hand-woven Keychain',
-    price: 2,
-    image: 'https://placehold.co/300x300.png',
-    hint: 'colorful hand-woven keychain',
-  },
-];
+type Item = {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  hint: string;
+  description: string;
+  generatedImage?: string;
+};
 
-type Item = typeof initialItems[0] & { generatedImage?: string };
+async function fetchItems(): Promise<Item[]> {
+    const res = await fetch('/api/marketplace/items');
+    if (!res.ok) {
+        throw new Error('Failed to fetch items');
+    }
+    return res.json();
+}
 
 export default function MarketplacePage() {
-  const [items, setItems] = useState<Item[]>(initialItems);
+  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchImages = async () => {
+    const loadItemsAndImages = async () => {
       setLoading(true);
-      const imagePromises = initialItems.map(item => generateImage({ prompt: item.hint }));
-      const imageResults = await Promise.all(imagePromises);
-      
-      const updatedItems = initialItems.map((item, index) => ({
-        ...item,
-        generatedImage: imageResults[index].imageUrl,
-      }));
-      
-      setItems(updatedItems);
-      setLoading(false);
+      try {
+        const fetchedItems = await fetchItems();
+        
+        const imagePromises = fetchedItems.map(item => 
+            generateImage({ prompt: item.hint }).catch(e => {
+                console.error(`Failed to generate image for ${item.title}`, e);
+                return { imageUrl: item.image }; // Fallback to placeholder
+            })
+        );
+        const imageResults = await Promise.all(imagePromises);
+        
+        const updatedItems = fetchedItems.map((item, index) => ({
+          ...item,
+          generatedImage: imageResults[index].imageUrl,
+        }));
+        
+        setItems(updatedItems);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchImages();
+    loadItemsAndImages();
   }, []);
 
   return (

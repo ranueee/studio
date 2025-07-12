@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/hooks/use-app';
@@ -13,46 +13,68 @@ import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 
-const item = {
-  id: 'mango-jam',
-  title: 'Sundowners Mango Jam',
-  price: 5,
-  image: 'https://placehold.co/600x400.png',
-  hint: 'jar of delicious mango jam',
-  description: 'Sweet and tangy mango jam made from fresh, locally sourced mangoes from Pangasinan. Perfect for toast, pastries, or as a glaze.'
+type Item = {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  hint: string;
+  description: string;
 };
 
 export default function RedemptionPage() {
   const router = useRouter();
+  const params = useParams();
+  const itemId = params.itemId as string;
+
   const { balance, redeemItem } = useApp();
   const { toast } = useToast();
+  
+  const [item, setItem] = useState<Item | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchImage = async () => {
-      setLoadingImage(true);
+    if (!itemId) return;
+
+    const fetchItem = async () => {
+      setLoading(true);
       try {
-        const result = await generateImage({ prompt: item.hint });
-        setGeneratedImage(result.imageUrl);
+        const res = await fetch(`/api/marketplace/items/${itemId}`);
+        if (!res.ok) {
+            throw new Error('Item not found');
+        }
+        const fetchedItem: Item = await res.json();
+        setItem(fetchedItem);
+
+        const imageResult = await generateImage({ prompt: fetchedItem.hint });
+        setGeneratedImage(imageResult.imageUrl);
       } catch (error) {
-        console.error("Failed to generate image", error);
-        // Keep placeholder on error
+        console.error("Failed to fetch item or image", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not load the requested item.",
+        });
+        router.push('/marketplace');
       } finally {
-        setLoadingImage(false);
+        setLoading(false);
       }
     };
-    fetchImage();
-  }, []);
+
+    fetchItem();
+  }, [itemId, router, toast]);
 
   const handleRedeem = () => {
+    if (!item) return;
+
     const success = redeemItem(item.price);
     if (success) {
       toast({
         title: "Success!",
         description: `You've redeemed ${item.title}.`,
       });
-      router.push('/marketplace/redeem/mango-jam/qr');
+      router.push(`/marketplace/redeem/${item.id}/qr`);
     } else {
       toast({
         variant: "destructive",
@@ -62,6 +84,23 @@ export default function RedemptionPage() {
     }
   };
 
+  if (loading || !item) {
+    return (
+        <AppShell>
+            <div className="p-4">
+                <div className="mt-12">
+                    <Skeleton className="h-[250px] w-full rounded-lg mb-4" />
+                    <Skeleton className="h-8 w-3/4 rounded-lg mb-2" />
+                    <Skeleton className="h-4 w-full rounded-lg mb-2" />
+                    <Skeleton className="h-4 w-full rounded-lg mb-6" />
+                    <Skeleton className="h-16 w-full rounded-lg mb-6" />
+                    <Skeleton className="h-12 w-full rounded-lg" />
+                </div>
+            </div>
+        </AppShell>
+    )
+  }
+
   return (
     <AppShell>
       <div className="p-4">
@@ -69,18 +108,14 @@ export default function RedemptionPage() {
             <ArrowLeft />
         </Button>
         <div className="mt-12">
-            {loadingImage ? (
-              <Skeleton className="h-[250px] w-full rounded-lg mb-4" />
-            ) : (
-              <Image 
+            <Image 
                 src={generatedImage || item.image} 
                 alt={item.title} 
                 data-ai-hint={item.hint} 
                 width={600} 
                 height={400} 
                 className="rounded-lg mb-4 w-full object-cover shadow-lg" 
-              />
-            )}
+            />
             <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
             <p className="text-muted-foreground mb-6">{item.description}</p>
             
