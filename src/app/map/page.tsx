@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
 import { Star, Binoculars, HelpCircle, Check, Award, MapPin as MapPinIcon } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
@@ -94,7 +94,7 @@ export default function MapPage() {
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
         style={{width: '100%', height: '100%'}}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle="mapbox://styles/mapbox/streets-v12"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
@@ -165,12 +165,14 @@ export default function MapPage() {
       {/* Check-In Modal */}
       <Dialog open={isCheckInModalOpen} onOpenChange={setCheckInModalOpen}>
         <DialogContent className="max-w-sm text-center p-8">
+            <DialogHeader>
+                <DialogTitle className="text-2xl font-bold mt-6 text-center w-full">Welcome to {selectedPoi?.name}!</DialogTitle>
+            </DialogHeader>
             <div className="flex justify-center items-center">
                 <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center">
                     <Check className="w-16 h-16 text-primary-foreground"/>
                 </div>
             </div>
-          <h2 className="text-2xl font-bold mt-6">Welcome to {selectedPoi?.name}!</h2>
           <DialogFooter className="mt-6 sm:justify-center">
             <Button size="lg" onClick={handleCheckIn} className="w-full">CHECK-IN & CLAIM REWARDS</Button>
           </DialogFooter>
@@ -180,7 +182,9 @@ export default function MapPage() {
       {/* Rewards Modal */}
       <Dialog open={isRewardsModalOpen} onOpenChange={setRewardsModalOpen}>
         <DialogContent className="max-w-sm text-center p-8">
-            <h2 className="text-2xl font-bold">Rewards Claimed!</h2>
+            <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">Rewards Claimed!</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4 my-8 animate-in fade-in duration-500">
                 <div className="bg-secondary p-4 rounded-lg text-lg font-semibold flex items-center justify-center gap-2">
                     +{selectedPoi?.rewards.xp} XP
