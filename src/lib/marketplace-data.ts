@@ -3,7 +3,7 @@ export const items = [
     id: 'mango-jam',
     title: 'Sundowners Mango Jam',
     price: 5,
-    image: 'https://placehold.co/600x400.png',
+    image: 'https://storage.googleapis.com/idx-dev-01.appspot.com/640713b1-5120-4158-944d-31a31a5476d0/sundowners-mango-jam.jpg',
     hint: 'a jar of Sundowners mango jam on a rustic table',
     description: 'Sweet and tangy mango jam made from fresh, locally sourced mangoes from Pangasinan. Perfect for toast, pastries, or as a glaze.'
   },
