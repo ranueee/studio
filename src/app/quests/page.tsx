@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { suggestOptimalEcoRoute, type SuggestOptimalEcoRouteOutput } from '@/ai/flows/suggest-route';
 import { Loader, Wand2, Route, Trees, CheckCircle, MapPin } from 'lucide-react';
 
-const availableInterests = ['Island Hopping', 'Snorkeling', 'Hiking', 'Bird Watching', 'Local Culture', 'Cave Exploration'];
-const availablePois = ['Hundred Islands National Park', 'Patar Beach', 'Enchanted Cave', 'Bolinao Falls', 'Cape Bolinao Lighthouse'];
+const availableInterests = ['Beaches', 'Island Hopping', 'Waterfalls', 'Cave Exploration', 'Historical Sites', 'Local Food'];
+const availablePois = ['Hundred Islands National Park', 'Patar Beach', 'Enchanted Cave', 'Bolinao Falls 1', 'Cape Bolinao Lighthouse', 'Sundowners Beach Club'];
 
 export default function QuestsPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -29,7 +29,7 @@ export default function QuestsPage() {
     setSuggestedRoute(null);
     try {
       const result = await suggestOptimalEcoRoute({
-        currentLocation: 'Pangasinan, Philippines',
+        currentLocation: 'Bolinao, Pangasinan, Philippines',
         availablePois,
         interests: selectedInterests,
       });

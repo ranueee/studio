@@ -44,20 +44,24 @@ const prompt = ai.definePrompt({
   name: 'suggestOptimalEcoRoutePrompt',
   input: {schema: SuggestOptimalEcoRouteInputSchema},
   output: {schema: SuggestOptimalEcoRouteOutputSchema},
-  prompt: `You are an AI-powered ecotourism route planner.
+  prompt: `You are an expert ecotourism guide for the Philippines. Your task is to create an optimal travel itinerary.
 
-  Given the user's current location: {{{currentLocation}}},
-  available points of interest (POIs): {{#each availablePois}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}},
-  and their interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}},
+You will be given the user's current location, a list of available points of interest (POIs), and their specific interests.
 
-  Suggest an optimal route that maximizes their eco-tourism experience.
+**Context:**
+- User's Current Location: {{{currentLocation}}}
+- Available POIs: {{#each availablePois}} - {{{this}}} {{/each}}
+- User's Interests: {{#each interests}} - {{{this}}} {{/each}}
 
-  The route should consider:
-  - Minimizing travel distance.
-  - Maximizing relevance to the user's interests.
-  - Highlighting diverse ecological aspects.
+**Your Goal:**
+Suggest an optimal, logical route that connects 2-4 of the available POIs.
 
-  Return the route as an ordered list of POIs, and provide a brief explanation of why this route is optimal.
+**Instructions:**
+1.  **Analyze Interests:** Prioritize POIs that directly match the user's interests. For example, if they like 'Historical Sites', prioritize the lighthouse. If they like 'Waterfalls', prioritize Bolinao Falls.
+2.  **Create a Logical Path:** Arrange the selected POIs in a sequence that makes geographical sense for a day trip. Assume travel between locations.
+3.  **Provide Reasoning:** In the 'reasoning' field, briefly explain *why* you chose this specific route. Mention how it aligns with the user's interests and the flow of travel. For example: "This route starts at the beach for morning relaxation, then moves inland to the falls for an afternoon adventure, aligning with your interests in both beach life and nature."
+
+Generate the 'optimalRoute' as an array of POI names and the 'reasoning' as a descriptive string.
   `,
 });
 
