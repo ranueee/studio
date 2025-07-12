@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, Hist
 import { TokenIcon } from '@/components/icons/token-icon';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { useToast } from '@/hooks/use-toast';
 
 const pois = [
   // Bolinao
@@ -99,11 +100,40 @@ export default function MapPage() {
   const [isCheckInModalOpen, setCheckInModalOpen] = useState(false);
   const [isRewardsModalOpen, setRewardsModalOpen] = useState(false);
   const [rewardsGiven, setRewardsGiven] = useState(false);
+  const { toast } = useToast();
+
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [viewState, setViewState] = useState({
     longitude: mapandanCenter.lng,
     latitude: mapandanCenter.lat,
-    zoom: 12
+    zoom: 9
   });
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          setViewState(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+            zoom: 12 // Zoom in to the user's location
+          }));
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+          toast({
+            variant: "destructive",
+            title: "Location Error",
+            description: "Could not get your location. Please ensure location services are enabled.",
+          });
+        }
+      );
+    }
+  }, [toast]);
+
 
   const handlePinClick = (poi: POI) => {
     if (visitedPois.includes(poi.id)) return;
@@ -156,15 +186,18 @@ export default function MapPage() {
 
     return (
       <Map
-        initialViewState={viewState}
+        {...viewState}
+        onMove={evt => setViewState(evt.viewState)}
         style={{width: '100%', height: '100%'}}
         mapStyle="mapbox://styles/mapbox/outdoors-v12"
         mapboxAccessToken={MAPBOX_TOKEN}
-        interactive={false}
+        interactive={true}
       >
-        <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
-          <UserLocationMarker />
-        </Marker>
+        {userLocation && (
+          <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
+            <UserLocationMarker />
+          </Marker>
+        )}
         {pois.map((poi) => {
           const isVisited = visitedPois.includes(poi.id);
           return (
