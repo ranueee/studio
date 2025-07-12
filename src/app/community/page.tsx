@@ -5,10 +5,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AppShell } from '@/components/app-shell';
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MapPin, ImagePlus, Video, Globe, Lock, Send, MoreVertical, Trash2, Heart, MessageCircle, Share2, Edit } from 'lucide-react';
+import { PlusCircle, MapPin, ImagePlus, Video, Globe, Lock, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,9 +91,17 @@ type Post = {
   timestamp: Date;
 };
 
+type Album = {
+    locationId: string;
+    locationName: string;
+    coverImage: string;
+    coverImageHint: string;
+    postCount: number;
+    posts: Post[];
+};
 
 export default function CommunityPage() {
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [albums, setAlbums] = useState<Album[]>([]);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [newPostContent, setNewPostContent] = useState('');
     const [newPostLocation, setNewPostLocation] = useState('');
@@ -103,19 +110,44 @@ export default function CommunityPage() {
     const [mediaTypeToAdd, setMediaTypeToAdd] = useState<'image' | 'video' | null>(null);
     const [isPosting, setIsPosting] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [createAlbum, setCreateAlbum] = useState(false);
+    const [createAlbumSwitch, setCreateAlbumSwitch] = useState(false);
     const [newAlbumName, setNewAlbumName] = useState('');
     const { toast } = useToast();
+    
+    const getLocationName = (locationId: string) => {
+        const poi = pois.find(p => p.id === locationId);
+        return poi ? poi.name : locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
 
-    const processPosts = () => {
+    const processPostsIntoAlbums = () => {
       setLoading(true);
-      const sortedPosts = [...initialPosts].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-      setPosts(sortedPosts);
+      const postsByLocation: { [key: string]: Post[] } = {};
+      initialPosts.forEach(post => {
+          if (!postsByLocation[post.locationId]) {
+              postsByLocation[post.locationId] = [];
+          }
+          postsByLocation[post.locationId].push(post);
+      });
+      
+      const createdAlbums = Object.entries(postsByLocation).map(([locationId, posts]) => {
+          const sortedPosts = posts.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+          const coverPost = sortedPosts[0];
+          return {
+              locationId: locationId,
+              locationName: getLocationName(locationId),
+              coverImage: coverPost.image || 'https://placehold.co/600x400.png',
+              coverImageHint: coverPost.imageHint || 'community album cover',
+              postCount: posts.length,
+              posts: sortedPosts,
+          };
+      });
+
+      setAlbums(createdAlbums.sort((a, b) => b.posts[0].timestamp.getTime() - a.posts[0].timestamp.getTime()));
       setLoading(false);
     };
 
     useEffect(() => {
-        processPosts();
+        processPostsIntoAlbums();
     }, []);
 
     const resetCreateModal = () => {
@@ -125,7 +157,7 @@ export default function CommunityPage() {
         setNewPostMedia(null);
         setMediaTypeToAdd(null);
         setIsPosting(false);
-        setCreateAlbum(false);
+        setCreateAlbumSwitch(false);
         setNewAlbumName('');
         setCreateModalOpen(false);
     };
@@ -135,7 +167,7 @@ export default function CommunityPage() {
             toast({ variant: 'destructive', title: 'Missing information', description: 'Please add content and a location.' });
             return;
         }
-        if (createAlbum && !newAlbumName.trim()) {
+        if (createAlbumSwitch && !newAlbumName.trim()) {
             toast({ variant: 'destructive', title: 'Missing Album Name', description: 'Please provide a name for the new album.' });
             return;
         }
@@ -153,19 +185,23 @@ export default function CommunityPage() {
         }
         
         const locationSlug = newPostLocation.trim().toLowerCase().replace(/\s+/g, '-');
+        
+        const poiToUse = createAlbumSwitch ? newAlbumName.trim() : newPostLocation.trim();
         const existingPoi = pois.find(p => p.id === locationSlug);
 
-        if (createAlbum) {
+        if (createAlbumSwitch) {
             if (existingPoi) {
-                existingPoi.name = newAlbumName;
+                // If a POI with this slug exists, just update its name for the new album
+                existingPoi.name = poiToUse;
                 existingPoi.isAlbum = true;
             } else {
-                pois.push({ id: locationSlug, name: newAlbumName.trim(), isAlbum: true });
+                // Otherwise, create a new POI entry for the album
+                pois.push({ id: locationSlug, name: poiToUse, isAlbum: true });
             }
         } else if (!existingPoi) {
-            pois.push({ id: locationSlug, name: newPostLocation.trim(), isAlbum: false });
+             // If not creating a specific album and the location is new, add it as a general POI
+             pois.push({ id: locationSlug, name: poiToUse, isAlbum: false });
         }
-
 
         const newPost: Post = {
             id: Date.now(),
@@ -179,7 +215,7 @@ export default function CommunityPage() {
         };
 
         initialPosts.unshift(newPost);
-        processPosts();
+        processPostsIntoAlbums();
         
         resetCreateModal();
         toast({ title: 'Post Created!', description: 'Your adventure has been shared.' });
@@ -193,98 +229,50 @@ export default function CommunityPage() {
         }
     };
     
-    const getLocationName = (locationId: string) => {
-        const poi = pois.find(p => p.id === locationId);
-        return poi ? poi.name : locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-
     return (
         <AppShell>
             <div className="p-4 space-y-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold">Community Feed</h1>
+                    <h1 className="text-3xl font-bold">Community Albums</h1>
                     <Button onClick={() => setCreateModalOpen(true)}>
                         <PlusCircle className="mr-2" />
                         Create Post
                     </Button>
                 </div>
                 
-                <div className="space-y-4">
-                    {(loading ? Array.from({ length: 3 }) : posts).map((post: Post | undefined, index) => (
-                        <Card key={post?.id ?? index} className="overflow-hidden">
-                        {post ? (
-                            <>
-                            <CardHeader className="flex flex-row items-center gap-3 p-4">
-                                <Avatar>
-                                <AvatarImage src={post.user.avatar} alt={post.user.name} />
-                                <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <p className="font-semibold">{post.user.name}</p>
-                                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <span>{new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(post.timestamp)}</span>
-                                        <span>&middot;</span>
-                                        <Link href={`/community/album/${post.locationId}`} className="hover:underline">
-                                           <span>{getLocationName(post.locationId)}</span>
-                                        </Link>
-                                    </div>
+                <div className="grid grid-cols-1 gap-4">
+                    {(loading ? Array.from({ length: 3 }) : albums).map((album: Album | undefined, index) => (
+                        <Link href={album ? `/community/album/${album.locationId}` : '#'} key={album?.locationId ?? index}>
+                            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                            {album ? (
+                                <>
+                                    <CardHeader className="p-0 relative">
+                                        <Image
+                                            src={album.coverImage}
+                                            alt={album.locationName}
+                                            width={600}
+                                            height={250}
+                                            className="w-full h-40 object-cover"
+                                            data-ai-hint={album.coverImageHint}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                                        <div className="absolute bottom-0 left-0 p-4">
+                                            <h2 className="text-2xl font-bold text-white">{album.locationName}</h2>
+                                            <p className="text-sm text-white/90">{album.postCount} {album.postCount > 1 ? 'posts' : 'post'}</p>
+                                        </div>
+                                    </CardHeader>
+                                </>
+                            ) : (
+                                <div className="p-4 space-y-4">
+                                    <Skeleton className="h-40 w-full" />
+                                    <Skeleton className="h-6 w-3/5" />
+                                    <Skeleton className="h-4 w-1/4" />
                                 </div>
-                                <Badge variant={post.visibility === 'Public' ? 'secondary' : 'outline'}>
-                                    {post.visibility === 'Public' ? <Globe className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
-                                    {post.visibility}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {post.image && (
-                                    <Image
-                                        src={post.image}
-                                        alt={post.caption}
-                                        width={600}
-                                        height={400}
-                                        className="w-full h-auto object-cover"
-                                        data-ai-hint={post.imageHint || "community post image"}
-                                    />
-                                )}
-                                {post.video && (
-                                     <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
-                                        <video src={post.video} controls className="w-full h-full" />
-                                    </div>
-                                )}
-                                <p className="p-4 text-sm">{post.caption}</p>
-                            </CardContent>
-                            <CardFooter className="p-2 border-t">
-                                <div className="flex w-full justify-around">
-                                    <Button variant="ghost" className="flex-1">
-                                        <Heart className="mr-2" />
-                                        Like
-                                    </Button>
-                                    <Button variant="ghost" className="flex-1">
-                                        <MessageCircle className="mr-2" />
-                                        Comment
-                                    </Button>
-                                    <Button variant="ghost" className="flex-1">
-                                        <Share2 className="mr-2" />
-                                        Share
-                                    </Button>
-                                </div>
-                            </CardFooter>
-                            </>
-                        ) : (
-                            <div className="p-4 space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <Skeleton className="h-10 w-10 rounded-full" />
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-[150px]" />
-                                        <Skeleton className="h-4 w-[100px]" />
-                                    </div>
-                                </div>
-                                <Skeleton className="h-[250px] w-full rounded-lg" />
-                                <Skeleton className="h-4 w-full" />
-                            </div>
-                        )}
-                        </Card>
+                            )}
+                            </Card>
+                        </Link>
                     ))}
-                     {!loading && posts.length === 0 && (
+                     {!loading && albums.length === 0 && (
                         <div className="text-center text-muted-foreground py-16">
                             <h3 className="text-lg font-semibold">The Feed is Quiet...</h3>
                             <p className="mt-2">Be the first to share an adventure!</p>
@@ -320,11 +308,11 @@ export default function CommunityPage() {
                         </div>
 
                          <div className="flex items-center space-x-2">
-                            <Switch id="create-album-switch" checked={createAlbum} onCheckedChange={setCreateAlbum} />
+                            <Switch id="create-album-switch" checked={createAlbumSwitch} onCheckedChange={setCreateAlbumSwitch} />
                             <Label htmlFor="create-album-switch">Create a new album for this location</Label>
                         </div>
 
-                        {createAlbum && (
+                        {createAlbumSwitch && (
                             <div className="pl-2 animate-in fade-in">
                                 <Input
                                     placeholder="Enter album name"
@@ -367,5 +355,3 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
-
-    
