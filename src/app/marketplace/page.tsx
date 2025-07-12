@@ -8,8 +8,6 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { Skeleton } from '@/components/ui/skeleton';
-import { generateImage } from '@/ai/flows/generate-image-flow';
-import type { GenerateImageOutput } from '@/ai/flows/generate-image-flow';
 
 type Item = {
   id: string;
@@ -18,7 +16,6 @@ type Item = {
   image: string;
   hint: string;
   description: string;
-  generatedImage?: string;
 };
 
 async function fetchItems(): Promise<Item[]> {
@@ -34,42 +31,22 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadItemsAndImages = async () => {
+    const loadItems = async () => {
       setLoading(true);
       try {
         const fetchedItems = await fetchItems();
-        
-        // Set initial items to show placeholders while images generate
         setItems(fetchedItems);
-
-        const imagePromises = fetchedItems.map(item => 
-            generateImage({ prompt: item.hint }).catch(e => {
-                console.error(`Failed to generate image for ${item.title}`, e);
-                return { imageUrl: item.image }; // Fallback to placeholder
-            })
-        );
-        const imageResults = await Promise.all(imagePromises);
-        
-        const updatedItems = fetchedItems.map((item, index) => ({
-          ...item,
-          generatedImage: imageResults[index].imageUrl,
-        }));
-        
-        setItems(updatedItems);
       } catch (error) {
         console.error(error);
-        // In case of error, still show items with placeholders
-        const fetchedItems = await fetchItems().catch(() => []);
-        setItems(fetchedItems);
       } finally {
         setLoading(false);
       }
     };
 
-    loadItemsAndImages();
+    loadItems();
   }, []);
 
-  const displayItems = loading && items.length === 0 ? Array.from({ length: 4 }).map((_, i) => ({ id: i })) : items;
+  const displayItems = loading ? Array.from({ length: 4 }).map((_, i) => ({ id: i })) : items;
 
   return (
     <AppShell>
@@ -83,18 +60,14 @@ export default function MarketplacePage() {
                 <Link href={`/marketplace/redeem/${item.id}`}>
                   <Card className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-shadow">
                     <CardHeader className="p-0">
-                      {item.generatedImage ? (
-                        <Image 
-                          src={item.generatedImage} 
-                          alt={item.title!} 
-                          data-ai-hint={item.hint} 
-                          width={300} 
-                          height={300} 
-                          className="w-full h-32 object-cover" 
-                        />
-                      ) : (
-                        <Skeleton className="w-full h-32" />
-                      )}
+                      <Image 
+                        src={item.image!} 
+                        alt={item.title!} 
+                        data-ai-hint={item.hint} 
+                        width={300} 
+                        height={300} 
+                        className="w-full h-32 object-cover" 
+                      />
                     </CardHeader>
                     <CardContent className="p-3 flex-1">
                       <h3 className="font-semibold text-sm leading-tight">{item.title}</h3>

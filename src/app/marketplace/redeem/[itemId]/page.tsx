@@ -11,7 +11,6 @@ import { TokenIcon } from '@/components/icons/token-icon';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { generateImage } from '@/ai/flows/generate-image-flow';
 
 type Item = {
   id: string;
@@ -31,13 +30,12 @@ export default function RedemptionPage() {
   const { toast } = useToast();
   
   const [item, setItem] = useState<Item | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!itemId) return;
 
-    const fetchItemAndImage = async () => {
+    const fetchItem = async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/marketplace/items/${itemId}`);
@@ -47,12 +45,8 @@ export default function RedemptionPage() {
         const fetchedItem: Item = await res.json();
         setItem(fetchedItem);
 
-        // Now generate the image
-        const imageResult = await generateImage({ prompt: fetchedItem.hint });
-        setGeneratedImage(imageResult.imageUrl);
-
       } catch (error) {
-        console.error("Failed to fetch item or image", error);
+        console.error("Failed to fetch item", error);
         toast({
             variant: "destructive",
             title: "Error",
@@ -64,7 +58,7 @@ export default function RedemptionPage() {
       }
     };
 
-    fetchItemAndImage();
+    fetchItem();
   }, [itemId, router, toast]);
 
   const handleRedeem = () => {
@@ -113,18 +107,14 @@ export default function RedemptionPage() {
             <ArrowLeft />
         </Button>
         <div className="mt-12">
-            {generatedImage ? (
-              <Image 
-                  src={generatedImage} 
-                  alt={item.title} 
-                  data-ai-hint={item.hint} 
-                  width={600} 
-                  height={400} 
-                  className="rounded-lg mb-4 w-full object-cover shadow-lg" 
-              />
-            ) : (
-              <Skeleton className="h-[250px] w-full rounded-lg mb-4" />
-            )}
+            <Image 
+                src={item.image} 
+                alt={item.title} 
+                data-ai-hint={item.hint} 
+                width={600} 
+                height={400} 
+                className="rounded-lg mb-4 w-full object-cover shadow-lg" 
+            />
             <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
             <p className="text-muted-foreground mb-6">{item.description}</p>
             
