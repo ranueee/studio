@@ -18,6 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useApp } from '@/hooks/use-app';
+import type { Post, Comment } from '@/contexts/app-context';
 
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
@@ -25,104 +27,14 @@ const XIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="h
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>;
 
-// In a real app, this data would be fetched from a database
-let initialPosts: Post[] = [
-    {
-        id: 1,
-        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines beach sunset',
-        caption: 'Sunsets in Pangasinan are unreal!',
-        locationId: 'patar-beach',
-        albumName: 'Patar Beach Adventures',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-26T18:25:43.511Z'),
-        likes: 12,
-        comments: [
-            { id: 1, user: { name: 'Trailblazer Tom' }, text: 'Amazing shot!' }
-        ],
-    },
-    {
-        id: 2,
-        user: { name: 'Trailblazer Tom', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines islands boat',
-        caption: 'Island hopping day was a success!',
-        locationId: 'hundred-islands',
-        albumName: 'Hundred Islands Trip',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-25T12:10:11.511Z'),
-        likes: 25,
-        comments: [],
-    },
-    {
-        id: 3,
-        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines cave water',
-        caption: 'Took a dip in the Enchanted Cave.',
-        locationId: 'enchanted-cave',
-        albumName: 'Bolinao Getaway',
-        visibility: 'Private',
-        timestamp: new Date('2023-10-24T09:30:00.511Z'),
-        likes: 5,
-        comments: [],
-    },
-    {
-        id: 4,
-        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines lighthouse coast',
-        caption: 'The view from the top is worth the climb!',
-        locationId: 'cape-bolinao',
-        albumName: 'Bolinao Getaway',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-23T15:00:21.511Z'),
-        likes: 18,
-        comments: [],
-    },
-    {
-        id: 5,
-        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines white sand beach',
-        caption: 'Another beautiful day at the beach.',
-        locationId: 'patar-beach',
-        albumName: 'Patar Beach Adventures',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-27T11:45:00.511Z'),
-        likes: 9,
-        comments: [],
-    },
-];
-
-type Comment = {
-    id: number;
-    user: { name: string; };
-    text: string;
-};
-
-type Post = {
-    id: number;
-    user: { name: string; avatar: string; };
-    image?: string;
-    imageHint?: string;
-    video?: string;
-    caption: string;
-    locationId: string;
-    albumName?: string;
-    visibility: 'Public' | 'Private';
-    timestamp: Date;
-    likes: number;
-    comments: Comment[];
-};
 
 export default function AlbumDetailPage() {
     const params = useParams();
     const router = useRouter();
     const albumId = params.albumId as string;
+    const { posts, deletePost, editPost, addCommentToPost } = useApp();
 
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [albumPosts, setAlbumPosts] = useState<Post[]>([]);
     const [albumName, setAlbumName] = useState('');
     const [loading, setLoading] = useState(true);
     const [isShareModalOpen, setShareModalOpen] = useState(false);
@@ -138,11 +50,10 @@ export default function AlbumDetailPage() {
 
     const fetchAlbumData = () => {
         setLoading(true);
-        // In a real app, this data would be fetched. We are sorting by most recent first.
-        const albumPosts = initialPosts.filter(p => p.albumName?.toLowerCase().replace(/\s+/g, '-') === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+        const filteredPosts = posts.filter(p => p.albumName?.toLowerCase().replace(/\s+/g, '-') === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
         
-        setPosts(albumPosts);
-        const friendlyAlbumName = albumPosts[0]?.albumName || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        setAlbumPosts(filteredPosts);
+        const friendlyAlbumName = filteredPosts[0]?.albumName || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         setAlbumName(friendlyAlbumName);
         setLoading(false);
     };
@@ -150,7 +61,7 @@ export default function AlbumDetailPage() {
     useEffect(() => {
         if (!albumId) return;
         fetchAlbumData();
-    }, [albumId]);
+    }, [albumId, posts]);
     
     const handleShare = (platform: string) => {
         setShareModalOpen(false);
@@ -167,9 +78,8 @@ export default function AlbumDetailPage() {
         });
     }
 
-    const handleDeletePost = (postId: number) => {
-        initialPosts = initialPosts.filter(p => p.id !== postId);
-        fetchAlbumData();
+    const handleDelete = (postId: number) => {
+        deletePost(postId);
         toast({
             title: "Post Deleted",
             description: "The post has been removed from the album.",
@@ -184,11 +94,7 @@ export default function AlbumDetailPage() {
 
     const handleEditPost = () => {
         if (!editingPost) return;
-        const postIndex = initialPosts.findIndex(p => p.id === editingPost.id);
-        if (postIndex > -1) {
-            initialPosts[postIndex].caption = editedCaption;
-        }
-        setPosts(posts.map(p => p.id === editingPost.id ? { ...p, caption: editedCaption } : p));
+        editPost(editingPost.id, editedCaption);
         setEditModalOpen(false);
         setEditingPost(null);
         setEditedCaption('');
@@ -202,7 +108,7 @@ export default function AlbumDetailPage() {
         const newLikedPosts = new Set(likedPosts);
         const isLiked = newLikedPosts.has(postId);
 
-        setPosts(posts.map(p => {
+        setAlbumPosts(albumPosts.map(p => {
             if (p.id === postId) {
                 if (isLiked) {
                     newLikedPosts.delete(postId);
@@ -226,18 +132,7 @@ export default function AlbumDetailPage() {
             text: commentText,
         };
 
-        setPosts(posts.map(p => {
-            if (p.id === postId) {
-                return { ...p, comments: [...p.comments, newComment] };
-            }
-            return p;
-        }));
-
-        // Also update the "database"
-        const postIndex = initialPosts.findIndex(p => p.id === postId);
-        if (postIndex > -1) {
-            initialPosts[postIndex].comments.push(newComment);
-        }
+        addCommentToPost(postId, newComment);
 
         setCommentText('');
         setCommentingOnPostId(null);
@@ -263,11 +158,11 @@ export default function AlbumDetailPage() {
                     <h1 className="text-2xl font-bold">{albumName}</h1>
                 </div>
                  <div className="flex items-center justify-end">
-                    <Button>Add More Photos</Button>
+                    <Button onClick={() => router.push('/community')}>Create new Post</Button>
                 </div>
 
                 <div className="space-y-4">
-                    {(loading ? Array.from({ length: 2 }) : posts).map((post: Post | undefined, index) => (
+                    {(loading ? Array.from({ length: 2 }) : albumPosts).map((post: Post | undefined, index) => (
                         <Card key={post?.id ?? index} className="overflow-hidden">
                         {post ? (
                             <>
@@ -298,7 +193,7 @@ export default function AlbumDetailPage() {
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 <span>Edit</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive">
+                                            <DropdownMenuItem onClick={() => handleDelete(post.id)} className="text-destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 <span>Delete</span>
                                             </DropdownMenuItem>
@@ -389,7 +284,7 @@ export default function AlbumDetailPage() {
                         )}
                         </Card>
                     ))}
-                     {!loading && posts.length === 0 && (
+                     {!loading && albumPosts.length === 0 && (
                         <div className="text-center text-muted-foreground py-10">
                             <p>This album is empty.</p>
                             <Button variant="link" onClick={() => router.push('/community')}>Go back to community</Button>
@@ -456,5 +351,3 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
-
-    

@@ -21,78 +21,9 @@ import { MapPin, ImagePlus, Globe, Lock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useApp } from '@/hooks/use-app';
+import type { Post } from '@/contexts/app-context';
 
-
-let initialPosts: any[] = [
-    {
-        id: 1,
-        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines beach sunset',
-        caption: 'Sunsets in Pangasinan are unreal!',
-        locationId: 'patar-beach',
-        albumName: 'Patar Beach Adventures',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-26T18:25:43.511Z'),
-    },
-    {
-        id: 2,
-        user: { name: 'Trailblazer Tom', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines islands boat',
-        caption: 'Island hopping day was a success!',
-        locationId: 'hundred-islands',
-        albumName: 'Hundred Islands Trip',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-25T12:10:11.511Z'),
-    },
-    {
-        id: 3,
-        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines cave water',
-        caption: 'Took a dip in the Enchanted Cave.',
-        locationId: 'enchanted-cave',
-        albumName: 'Bolinao Getaway',
-        visibility: 'Private',
-        timestamp: new Date('2023-10-24T09:30:00.511Z'),
-    },
-    {
-        id: 4,
-        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines lighthouse coast',
-        caption: 'The view from the top is worth the climb!',
-        locationId: 'cape-bolinao',
-        albumName: 'Bolinao Getaway',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-23T15:00:21.511Z'),
-    },
-     {
-        id: 5,
-        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: 'https://placehold.co/600x400.png',
-        imageHint: 'philippines white sand beach',
-        caption: 'Another beautiful day at the beach.',
-        locationId: 'patar-beach',
-        albumName: 'Patar Beach Adventures',
-        visibility: 'Public',
-        timestamp: new Date('2023-10-27T11:45:00.511Z'),
-    },
-];
-
-type Post = {
-  id: number;
-  user: { name: string; avatar: string; };
-  image?: string;
-  imageHint?: string;
-  video?: string;
-  caption: string;
-  locationId: string;
-  albumName?: string;
-  visibility: 'Public' | 'Private';
-  timestamp: Date;
-};
 
 type Album = {
     albumId: string;
@@ -103,6 +34,7 @@ type Album = {
 };
 
 export default function CommunityPage() {
+    const { posts, addPost, deletePost } = useApp();
     const [albums, setAlbums] = useState<Album[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -127,7 +59,7 @@ export default function CommunityPage() {
       setLoading(true);
       const albumsByName: { [key: string]: Post[] } = {};
       
-      initialPosts.forEach(post => {
+      posts.forEach(post => {
           if (post.albumName) {
               if (!albumsByName[post.albumName]) {
                   albumsByName[post.albumName] = [];
@@ -149,17 +81,18 @@ export default function CommunityPage() {
       });
 
       setAlbums(createdAlbums.sort((a, b) => a.albumName.localeCompare(b.albumName)));
-      setExistingAlbumNames([...new Set(initialPosts.filter(p => p.albumName).map(p => p.albumName))]);
+      setExistingAlbumNames([...new Set(posts.filter(p => p.albumName).map(p => p.albumName!))]);
       setLoading(false);
     };
 
     useEffect(() => {
         processPostsIntoAlbums();
-    }, []);
+    }, [posts]);
     
     const handleDeleteAlbum = (albumNameToDelete: string) => {
-        initialPosts = initialPosts.filter(p => p.albumName !== albumNameToDelete);
-        processPostsIntoAlbums();
+        const postsToDelete = posts.filter(p => p.albumName === albumNameToDelete);
+        postsToDelete.forEach(p => deletePost(p.id));
+        
         toast({
             title: "Album Deleted",
             description: `The album "${albumNameToDelete}" and all its posts have been removed.`,
@@ -220,11 +153,12 @@ export default function CommunityPage() {
             visibility: newPostVisibility,
             timestamp: new Date(),
             albumName: finalAlbumName || undefined,
+            likes: 0,
+            comments: [],
             ...mediaData,
         };
         
-        initialPosts.unshift(newPost);
-        processPostsIntoAlbums();
+        addPost(newPost);
         
         resetCreateModal();
         toast({ title: 'Post Created!', description: 'Your adventure has been shared.' });
@@ -424,5 +358,3 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
-
-    
