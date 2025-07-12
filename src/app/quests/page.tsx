@@ -137,71 +137,67 @@ export default function ItineraryPage() {
                     <span className="font-semibold">Estimated Budget: {suggestedRoute.estimatedBudget}</span>
                 </div>
               
-                {suggestedRoute.itinerary.map((day) => (
+                {suggestedRoute.itinerary.map((day, dayIndex) => (
                     <div key={day.day}>
-                        <Separator className="my-4"/>
-                        <h3 className="font-bold text-lg flex items-center gap-2 mb-3">
-                            <CalendarDays className="w-5 h-5 text-muted-foreground"/>
+                        {dayIndex > 0 && <Separator className="my-6"/>}
+                        <h3 className="font-bold text-xl flex items-center gap-2 mb-4">
+                            <CalendarDays className="w-6 h-6 text-muted-foreground"/>
                             Day {day.day}: {day.title}
                         </h3>
-                        <ul className="space-y-3 pl-2">
+
+                        <div className="relative pl-6 space-y-4 border-l-2 border-primary/20">
                             {day.activities.map((activity, index) => (
-                                <li key={index} className="flex items-start gap-4">
-                                    <div className="w-24 text-right text-sm font-semibold text-primary shrink-0">
-                                        <Clock className="w-4 h-4 inline-block mr-1 align-middle"/>
-                                        {activity.time}
-                                    </div>
-                                    <div className="flex-1 border-l-2 border-primary/20 pl-4 pb-2">
-                                        <div className="flex items-start gap-3">
-                                            <MapPin className="w-4 h-4 text-primary mt-1 shrink-0"/>
-                                            <span>{activity.description}</span>
-                                        </div>
-                                    </div>
-                                </li>
+                                <div key={index} className="relative">
+                                    <div className="absolute -left-[35px] top-1.5 h-4 w-4 bg-primary rounded-full" />
+                                    <p className="font-semibold text-primary">{activity.time}</p>
+                                    <p className="font-medium text-foreground">{activity.description}</p>
+                                </div>
                             ))}
-                        </ul>
-                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        </div>
+
+                         <div className="mt-6 space-y-4">
                             {day.accommodation && (
-                                <div className="bg-primary/10 p-3 rounded-lg">
-                                    <p className="font-semibold flex items-center gap-2"><BedDouble className="w-4 h-4"/> Accommodation</p>
-                                    <p className="text-muted-foreground pl-6">{day.accommodation}</p>
+                                <div className="bg-primary/10 p-4 rounded-lg">
+                                    <p className="font-bold flex items-center gap-2 mb-2"><BedDouble className="w-5 h-5"/> Accommodation</p>
+                                    <p className="text-muted-foreground pl-7">{day.accommodation}</p>
                                 </div>
                             )}
-                        </div>
-                        <div className="mt-4 space-y-3">
-                             <h4 className="font-semibold text-md flex items-center gap-2">
-                                <Utensils className="w-5 h-5 text-muted-foreground" />
-                                Dining Plan
-                             </h4>
-                             <div className="pl-6 space-y-3">
-                                {day.dining.breakfast && (
-                                    <div className="flex gap-4">
-                                        <Coffee className="w-4 h-4 mt-1 text-amber-600"/>
-                                        <div>
-                                            <p className="font-semibold">{day.dining.breakfast.restaurant} ({day.dining.breakfast.time})</p>
-                                            {day.dining.breakfast.notes && <p className="text-xs text-muted-foreground">{day.dining.breakfast.notes}</p>}
+
+                            <div>
+                                 <h4 className="font-bold text-lg flex items-center gap-2 mb-3">
+                                    <Utensils className="w-5 h-5" />
+                                    Dining Plan
+                                 </h4>
+                                 <div className="space-y-3 pl-7">
+                                    {day.dining.breakfast && (
+                                        <div className="flex gap-4">
+                                            <Coffee className="w-5 h-5 mt-0.5 text-amber-600 shrink-0"/>
+                                            <div>
+                                                <p className="font-semibold">{day.dining.breakfast.restaurant} <span className="text-sm text-muted-foreground">({day.dining.breakfast.time})</span></p>
+                                                {day.dining.breakfast.notes && <p className="text-xs text-muted-foreground">{day.dining.breakfast.notes}</p>}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                                {day.dining.lunch && (
-                                    <div className="flex gap-4">
-                                        <Sun className="w-4 h-4 mt-1 text-yellow-500"/>
-                                        <div>
-                                            <p className="font-semibold">{day.dining.lunch.restaurant} ({day.dining.lunch.time})</p>
-                                            {day.dining.lunch.notes && <p className="text-xs text-muted-foreground">{day.dining.lunch.notes}</p>}
+                                    )}
+                                    {day.dining.lunch && (
+                                        <div className="flex gap-4">
+                                            <Sun className="w-5 h-5 mt-0.5 text-yellow-500 shrink-0"/>
+                                            <div>
+                                                <p className="font-semibold">{day.dining.lunch.restaurant} <span className="text-sm text-muted-foreground">({day.dining.lunch.time})</span></p>
+                                                {day.dining.lunch.notes && <p className="text-xs text-muted-foreground">{day.dining.lunch.notes}</p>}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                                {day.dining.dinner && (
-                                    <div className="flex gap-4">
-                                        <Moon className="w-4 h-4 mt-1 text-indigo-400"/>
-                                        <div>
-                                            <p className="font-semibold">{day.dining.dinner.restaurant} ({day.dining.dinner.time})</p>
-                                            {day.dining.dinner.notes && <p className="text-xs text-muted-foreground">{day.dining.dinner.notes}</p>}
+                                    )}
+                                    {day.dining.dinner && (
+                                        <div className="flex gap-4">
+                                            <Moon className="w-5 h-5 mt-0.5 text-indigo-400 shrink-0"/>
+                                            <div>
+                                                <p className="font-semibold">{day.dining.dinner.restaurant} <span className="text-sm text-muted-foreground">({day.dining.dinner.time})</span></p>
+                                                {day.dining.dinner.notes && <p className="text-xs text-muted-foreground">{day.dining.dinner.notes}</p>}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                             </div>
+                                    )}
+                                 </div>
+                            </div>
                         </div>
                     </div>
                 ))}
