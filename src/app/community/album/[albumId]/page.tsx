@@ -8,12 +8,12 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Share2, Globe, Lock, ArrowLeft, Copy } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Heart, MessageCircle, Share2, Globe, Lock, ArrowLeft, Copy, Trash2, MoreVertical } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { generateImage } from '@/ai/flows/generate-image-flow';
 
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
@@ -22,7 +22,7 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>;
 
 // In a real app, this data would be fetched from a database
-const pois = [
+let pois = [
   { id: 'hundred-islands', name: 'Hundred Islands' },
   { id: 'patar-beach', name: 'Patar Beach' },
   { id: 'enchanted-cave', name: 'Enchanted Cave' },
@@ -30,11 +30,11 @@ const pois = [
   { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse' },
 ];
 
-const initialPosts = [
+let initialPosts = [
     {
         id: 1,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines beach sunset',
         caption: 'Sunsets in Pangasinan are unreal!',
         locationId: 'patar-beach',
@@ -44,7 +44,7 @@ const initialPosts = [
     {
         id: 2,
         user: { name: 'Trailblazer Tom', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines islands boat',
         caption: 'Island hopping day was a success!',
         locationId: 'hundred-islands',
@@ -54,7 +54,7 @@ const initialPosts = [
     {
         id: 3,
         user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
         locationId: 'enchanted-cave',
@@ -64,7 +64,7 @@ const initialPosts = [
     {
         id: 4,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines lighthouse coast',
         caption: 'The view from the top is worth the climb!',
         locationId: 'cape-bolinao',
@@ -74,7 +74,7 @@ const initialPosts = [
     {
         id: 5,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines white sand beach',
         caption: 'Another beautiful day at the beach.',
         locationId: 'patar-beach',
@@ -88,6 +88,7 @@ type Post = {
     user: { name: string; avatar: string; };
     image?: string;
     imageHint?: string;
+    video?: string;
     caption: string;
     locationId: string;
     visibility: 'Public' | 'Private';
@@ -108,28 +109,14 @@ export default function AlbumDetailPage() {
     useEffect(() => {
         if (!albumId) return;
 
-        const fetchAlbumData = async () => {
+        const fetchAlbumData = () => {
             setLoading(true);
             const albumPosts = initialPosts.filter(p => p.locationId === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-            const postsWithImages = await Promise.all(
-                albumPosts.map(async (post) => {
-                    if (post.imageHint && !post.image) {
-                        try {
-                        const result = await generateImage({ prompt: post.imageHint });
-                        return { ...post, image: result.imageUrl };
-                        } catch (error) {
-                        console.error(`Failed to generate image for: ${post.imageHint}`, error);
-                        return { ...post, image: 'https://placehold.co/600x400.png' };
-                        }
-                    }
-                    return post;
-                })
-            );
-
-            setPosts(postsWithImages);
+            
+            setPosts(albumPosts);
             const location = pois.find(p => p.id === albumId);
-            setAlbumName(location?.name || 'Album');
+            const friendlyAlbumName = location?.name || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            setAlbumName(friendlyAlbumName);
             setLoading(false);
         };
 
@@ -148,6 +135,17 @@ export default function AlbumDetailPage() {
         toast({
             title: "Shared Successfully!",
             description: message,
+        });
+    }
+
+    const handleDeletePost = (postId: number) => {
+        // In a real app, you would make an API call to delete the post from the database.
+        // Here, we'll just filter it out from the local state for demonstration.
+        initialPosts = initialPosts.filter(p => p.id !== postId);
+        setPosts(posts.filter(p => p.id !== postId));
+        toast({
+            title: "Post Deleted",
+            description: "The post has been removed from the album.",
         });
     }
 
@@ -177,10 +175,25 @@ export default function AlbumDetailPage() {
                                         {new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(post.timestamp)}
                                     </p>
                                 </div>
-                                <Badge variant={post.visibility === 'Public' ? 'secondary' : 'outline'}>
-                                    {post.visibility === 'Public' ? <Globe className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
-                                    {post.visibility}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant={post.visibility === 'Public' ? 'secondary' : 'outline'}>
+                                        {post.visibility === 'Public' ? <Globe className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
+                                        {post.visibility}
+                                    </Badge>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Delete</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
                             </CardHeader>
                             <CardContent className="p-0">
                                 {post.image && (
@@ -190,8 +203,13 @@ export default function AlbumDetailPage() {
                                         width={600}
                                         height={400}
                                         className="w-full h-auto object-cover"
-                                        data-ai-hint={post.imageHint}
+                                        data-ai-hint={post.imageHint || "community post image"}
                                     />
+                                )}
+                                {post.video && (
+                                     <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
+                                        Video playback not implemented.
+                                    </div>
                                 )}
                                 <p className="p-4 text-sm">{post.caption}</p>
                             </CardContent>
@@ -227,6 +245,12 @@ export default function AlbumDetailPage() {
                         )}
                         </Card>
                     ))}
+                     {!loading && posts.length === 0 && (
+                        <div className="text-center text-muted-foreground py-10">
+                            <p>No posts in this album yet.</p>
+                            <Button variant="link" onClick={() => router.push('/community')}>Go back to albums</Button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -266,3 +290,4 @@ export default function AlbumDetailPage() {
     );
 }
 
+    

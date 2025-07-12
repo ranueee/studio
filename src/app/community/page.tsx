@@ -13,11 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock POIs for location tagging
-const pois = [
+// Mock POIs for location tagging - this will now be used as a base and can grow
+let pois = [
   { id: 'hundred-islands', name: 'Hundred Islands' },
   { id: 'patar-beach', name: 'Patar Beach' },
   { id: 'enchanted-cave', name: 'Enchanted Cave' },
@@ -25,11 +26,11 @@ const pois = [
   { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse' },
 ];
 
-const initialPosts = [
+let initialPosts = [
     {
         id: 1,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines beach sunset',
         caption: 'Sunsets in Pangasinan are unreal!',
         locationId: 'patar-beach',
@@ -39,7 +40,7 @@ const initialPosts = [
     {
         id: 2,
         user: { name: 'Trailblazer Tom', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines islands boat',
         caption: 'Island hopping day was a success!',
         locationId: 'hundred-islands',
@@ -49,7 +50,7 @@ const initialPosts = [
     {
         id: 3,
         user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
         locationId: 'enchanted-cave',
@@ -59,7 +60,7 @@ const initialPosts = [
     {
         id: 4,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines lighthouse coast',
         caption: 'The view from the top is worth the climb!',
         locationId: 'cape-bolinao',
@@ -69,7 +70,7 @@ const initialPosts = [
      {
         id: 5,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
-        image: '',
+        image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines white sand beach',
         caption: 'Another beautiful day at the beach.',
         locationId: 'patar-beach',
@@ -102,41 +103,30 @@ export default function CommunityPage() {
     const [albums, setAlbums] = useState<Album[]>([]);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [newPostContent, setNewPostContent] = useState('');
-    const [newPostLocation, setNewPostLocation] = useState<string | null>(null);
+    const [newPostLocation, setNewPostLocation] = useState('');
     const [newPostVisibility, setNewPostVisibility] = useState<'Public' | 'Private'>('Public');
+    const [newPostMedia, setNewPostMedia] = useState<{type: 'image' | 'video', url: string} | null>(null);
     const [isPosting, setIsPosting] = useState(false);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
-    const processPosts = async (posts: Post[]) => {
+    const processPosts = async (postsToProcess: Post[]) => {
       setLoading(true);
-      const postsWithImages = await Promise.all(
-        posts.map(async (post) => {
-          if (post.imageHint && !post.image) {
-            try {
-              const result = await generateImage({ prompt: post.imageHint });
-              return { ...post, image: result.imageUrl };
-            } catch (error) {
-              console.error(`Failed to generate image for: ${post.imageHint}`, error);
-              return { ...post, image: 'https://placehold.co/600x400.png' };
-            }
-          }
-          return post;
-        })
-      );
-  
-      const groupedByLocation = postsWithImages.reduce((acc, post) => {
+      
+      const groupedByLocation = postsToProcess.reduce((acc, post) => {
         (acc[post.locationId] = acc[post.locationId] || []).push(post);
         return acc;
       }, {} as Record<string, Post[]>);
   
       const createdAlbums: Album[] = Object.keys(groupedByLocation).map(locationId => {
         const locationPosts = groupedByLocation[locationId].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+        const locationName = pois.find(p => p.id === locationId)?.name || locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        
         return {
           locationId,
-          locationName: pois.find(p => p.id === locationId)?.name || 'Unknown Location',
+          locationName,
           posts: locationPosts,
-          coverImage: locationPosts[0]?.image || 'https://placehold.co/300x300.png',
+          coverImage: locationPosts.find(p => p.image)?.image || 'https://placehold.co/300x300.png',
           postCount: locationPosts.length,
         };
       });
@@ -149,44 +139,55 @@ export default function CommunityPage() {
         processPosts(initialPosts);
     }, []);
 
+    const resetCreateModal = () => {
+        setNewPostContent('');
+        setNewPostLocation('');
+        setNewPostVisibility('Public');
+        setNewPostMedia(null);
+        setIsPosting(false);
+        setCreateModalOpen(false);
+    };
+
     const handleCreatePost = async () => {
-        if (!newPostContent.trim() || !newPostLocation) {
-            toast({ variant: 'destructive', title: 'Missing information', description: 'Please add content and select a location.' });
+        if (!newPostContent.trim() || !newPostLocation.trim()) {
+            toast({ variant: 'destructive', title: 'Missing information', description: 'Please add content and a location.' });
             return;
         }
 
         setIsPosting(true);
-        toast({ title: 'Creating Post...', description: 'Your AI image is being generated.' });
-
-        let imageUrl: string | undefined = 'https://placehold.co/600x400.png';
-        try {
-            const result = await generateImage({ prompt: newPostContent.substring(0, 50) });
-            imageUrl = result.imageUrl;
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Image Generation Failed', description: 'Could not generate an image.' });
-            setIsPosting(false);
-            return;
+        
+        const locationSlug = newPostLocation.trim().toLowerCase().replace(/\s+/g, '-');
+        if (!pois.some(p => p.id === locationSlug)) {
+            pois.push({ id: locationSlug, name: newPostLocation.trim() });
         }
 
         const newPost: Post = {
             id: Date.now(),
             user: { name: 'Eco-Explorer', avatar: 'https://placehold.co/40x40.png' },
-            image: imageUrl,
             caption: newPostContent,
-            locationId: newPostLocation,
+            locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
+            ...(newPostMedia?.type === 'image' && { image: newPostMedia.url }),
+            ...(newPostMedia?.type === 'video' && { video: newPostMedia.url }),
         };
 
-        const allPosts = [...initialPosts, newPost]; // In a real app, this would come from the state that holds all posts
-        initialPosts.push(newPost); // Mutating for demo purposes
-        processPosts(allPosts);
+        initialPosts.push(newPost); // Mutating for demo purposes. In a real app, you'd update state.
+        await processPosts([...initialPosts]);
         
-        setCreateModalOpen(false);
-        setNewPostContent('');
-        setNewPostLocation(null);
-        setIsPosting(false);
-        toast({ title: 'Post Created!', description: 'Your adventure has been added to the album.' });
+        resetCreateModal();
+        toast({ title: 'Post Created!', description: 'Your adventure has been added to the community.' });
+    };
+
+    const handleAddMedia = (type: 'image' | 'video') => {
+        if (type === 'image') {
+            setNewPostMedia({ type: 'image', url: 'https://placehold.co/600x400.png' });
+            toast({ title: 'Image Added', description: 'A placeholder image has been added. In a real app, you would open a file picker.' });
+        }
+        // Video is just a placeholder for now
+        if (type === 'video') {
+            toast({ title: 'Video Upload', description: 'Video functionality is not yet implemented.' });
+        }
     };
 
     return (
@@ -212,7 +213,7 @@ export default function CommunityPage() {
                         <Link href={`/community/album/${album.locationId}`} key={album.locationId}>
                             <Card className="overflow-hidden h-48 flex flex-col group hover:shadow-lg transition-shadow">
                                 <div className="relative h-full">
-                                    <Image src={album.coverImage} alt={album.locationName} fill className="object-cover group-hover:scale-105 transition-transform" />
+                                    <Image src={album.coverImage} alt={album.locationName} data-ai-hint="philippines album" fill className="object-cover group-hover:scale-105 transition-transform" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                                     <div className="absolute bottom-0 left-0 p-3 text-white">
                                         <h3 className="font-bold">{album.locationName}</h3>
@@ -239,21 +240,16 @@ export default function CommunityPage() {
                             onChange={(e) => setNewPostContent(e.target.value)}
                             className="min-h-[100px]"
                         />
-                        <Select onValueChange={setNewPostLocation}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Tag a location" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {pois.map(poi => (
-                                    <SelectItem key={poi.id} value={poi.id}>
-                                        <div className="flex items-center gap-2">
-                                            <MapPin className="w-4 h-4" />
-                                            {poi.name}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="relative">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Tag a location (e.g., Patar Beach)"
+                                value={newPostLocation}
+                                onChange={(e) => setNewPostLocation(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+
                          <Select value={newPostVisibility} onValueChange={(v) => setNewPostVisibility(v as any)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Visibility" />
@@ -263,9 +259,20 @@ export default function CommunityPage() {
                                 <SelectItem value="Private"><div className="flex items-center gap-2"><Lock className="w-4 h-4"/>Private</div></SelectItem>
                             </SelectContent>
                         </Select>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <ImagePlus className="text-primary"/>
-                            <span>An AI-generated image will be created for your post.</span>
+                        
+                        {newPostMedia && (
+                            <div className="relative w-full aspect-video rounded-md overflow-hidden">
+                                <Image src={newPostMedia.url} alt="media preview" fill className="object-cover" />
+                                <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setNewPostMedia(null)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-4 text-muted-foreground">
+                            <span>Add to your post:</span>
+                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('image')}><ImagePlus className="text-primary"/></Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('video')}><Video className="text-primary"/></Button>
                         </div>
                     </div>
                     <DialogFooter>
@@ -281,3 +288,5 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
+
+    
