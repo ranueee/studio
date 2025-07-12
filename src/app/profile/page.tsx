@@ -120,13 +120,14 @@ export default function ProfilePage() {
           }
       }
 
+      // We re-initialize the provider to ensure it's using the correct, post-switch network.
       const newProvider = new ethers.BrowserProvider(window.ethereum);
       const accounts = await newProvider.send("eth_requestAccounts", []);
       
       if (accounts && Array.isArray(accounts) && accounts.length > 0) {
         const account = accounts[0];
         setWalletAddress(account);
-        await fetchBalance(newProvider, account);
+        await fetchBalance(newProvider, account); // Fetch balance after connection and potential switch
         toast({
             title: "Wallet Connected",
             description: "Your Viction wallet has been successfully connected.",
@@ -385,4 +386,3 @@ export default function ProfilePage() {
   );
 }
 
-    
