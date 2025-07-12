@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,24 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Send, Wallet, WalletCards } from 'lucide-react';
+import { Award, Wallet, WalletCards } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ethers } from 'ethers';
+
+// NOTE: Replace with your actual deployed $ECLB token contract address
+const ECLB_TOKEN_CONTRACT_ADDRESS = '0xYOUR_CONTRACT_ADDRESS_HERE';
+
+// Minimal ABI to get the token balance
+const erc20Abi = [
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)"
+];
 
 export default function ProfilePage() {
-  const { level, xp, balance, unlockedBadges, visitedPois } = useApp();
+  const { level, xp, unlockedBadges, visitedPois } = useApp();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [tokenBalance, setTokenBalance] = useState<string>('0.00');
+  const [isConnecting, setIsConnecting] = useState(false);
   const { toast } = useToast();
 
   const xpForNextLevel = 100;
@@ -29,32 +41,59 @@ export default function ProfilePage() {
     { id: 'River Guardian', name: 'River Guardian', unlocked: false },
   ];
 
+  const disconnectWallet = () => {
+    setWalletAddress(null);
+    setTokenBalance('0.00');
+    toast({
+        title: "Wallet Disconnected",
+        description: "Your wallet has been disconnected.",
+    });
+  };
+
   const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts && Array.isArray(accounts)) {
-            const account = accounts[0];
-            setWalletAddress(account);
-            toast({
-                title: "Wallet Connected",
-                description: "Your MetaMask wallet has been successfully connected.",
-            });
-        }
-      } catch (error) {
-        console.error("User rejected the request.");
-        toast({
-            variant: "destructive",
-            title: "Connection Failed",
-            description: "You rejected the wallet connection request.",
-        });
-      }
-    } else {
-       toast({
+    if (typeof window.ethereum === 'undefined') {
+      toast({
         variant: "destructive",
         title: "MetaMask Not Found",
         description: "Please install the MetaMask extension to connect your wallet.",
       });
+      return;
+    }
+    
+    setIsConnecting(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      
+      if (accounts && Array.isArray(accounts) && accounts.length > 0) {
+        const account = accounts[0];
+        setWalletAddress(account);
+        
+        if (ECLB_TOKEN_CONTRACT_ADDRESS === '0xYOUR_CONTRACT_ADDRESS_HERE') {
+            console.warn("Using placeholder token balance. Replace `ECLB_TOKEN_CONTRACT_ADDRESS` in profile page.");
+            setTokenBalance("1,234.56"); // Placeholder balance for UI development
+        } else {
+            const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
+            const balance = await tokenContract.balanceOf(account);
+            const decimals = await tokenContract.decimals();
+            const formattedBalance = ethers.formatUnits(balance, decimals);
+            setTokenBalance(parseFloat(formattedBalance).toFixed(2));
+        }
+
+        toast({
+            title: "Wallet Connected",
+            description: "Your MetaMask wallet has been successfully connected.",
+        });
+      }
+    } catch (error) {
+      console.error("User rejected the request or an error occurred.", error);
+      toast({
+          variant: "destructive",
+          title: "Connection Failed",
+          description: "An error occurred while connecting your wallet.",
+      });
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -101,19 +140,19 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
                         <div className="flex items-center gap-2">
                             <TokenIcon className="w-8 h-8"/>
-                            <span className="text-3xl font-bold">{balance.toFixed(2)}</span>
+                            <span className="text-3xl font-bold">{tokenBalance}</span>
                             <span className="text-lg font-semibold text-muted-foreground">$ECLB</span>
                         </div>
                     </div>
-                    <Button variant="outline" className="w-full" onClick={() => setWalletAddress(null)}>Disconnect Wallet</Button>
+                    <Button variant="outline" className="w-full" onClick={disconnectWallet}>Disconnect Wallet</Button>
                 </div>
 
             ) : (
                 <div className="flex flex-col items-center justify-center text-center p-4 space-y-4">
                     <Wallet className="w-12 h-12 text-muted-foreground" />
                     <p className="text-muted-foreground">Connect your wallet to see your balance and manage your assets.</p>
-                    <Button onClick={connectWallet} className="w-full">
-                        Connect MetaMask
+                    <Button onClick={connectWallet} className="w-full" disabled={isConnecting}>
+                        {isConnecting ? 'Connecting...' : 'Connect MetaMask'}
                     </Button>
                 </div>
             )}
