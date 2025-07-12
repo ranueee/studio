@@ -105,43 +105,50 @@ const initialAlbums: Album[] = [
     { id: 'album1', name: 'Bolinao Adventures', location: 'Bolinao, Pangasinan', postCount: 1, coverImage: 'https://placehold.co/600x400.png' }
 ];
 
+const defaultState: AppState = {
+    xp: 20,
+    level: 1,
+    balance: 50,
+    unlockedBadges: [],
+    visitedPois: [],
+    redeemedVouchers: [],
+    posts: initialPosts,
+    albums: initialAlbums,
+};
+
 
 const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [state, setState] = useState<AppState>(() => {
-    let savedState: AppState | null = null;
-    if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('appState');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Ensure initial posts/albums are present if local storage is empty on that front
-                if (!parsed.posts || parsed.posts.length === 0) {
-                    parsed.posts = initialPosts;
-                    parsed.albums = initialAlbums;
-                }
-                savedState = parsed;
-            } catch (e) {
-                console.error("Failed to parse saved state", e);
-            }
-        }
-    }
-    return savedState || {
-        xp: 20,
-        level: 1,
-        balance: 50,
-        unlockedBadges: [],
-        visitedPois: [],
-        redeemedVouchers: [],
-        posts: initialPosts,
-        albums: initialAlbums,
-    };
-  });
+  const [state, setState] = useState<AppState>(defaultState);
+  const [isHydrated, setIsHydrated] = useState(false);
 
+  // Effect to hydrate state from localStorage on client-side
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('appState', JSON.stringify(state));
+    const saved = localStorage.getItem('appState');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Ensure initial posts/albums are present if local storage is empty on that front
+        if (!parsed.posts || parsed.posts.length === 0) {
+            parsed.posts = initialPosts;
+        }
+         if (!parsed.albums || parsed.albums.length === 0) {
+            parsed.albums = initialAlbums;
+        }
+        setState(parsed);
+      } catch (e) {
+        console.error("Failed to parse saved state, using default.", e);
+        setState(defaultState);
+      }
     }
-  }, [state]);
+    setIsHydrated(true);
+  }, []);
+
+  // Effect to save state to localStorage whenever it changes
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem('appState', JSON.stringify(state));
+    }
+  }, [state, isHydrated]);
 
   const addXp = useCallback((amount: number) => {
     setState(prevState => {
