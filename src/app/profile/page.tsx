@@ -5,23 +5,30 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Wallet, WalletCards } from 'lucide-react';
+import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
+import { QRCodeSVG } from '@/components/qr-code';
+
 
 // NOTE: Replace with your actual deployed $ECLB token contract address
 const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603';
+const VICTION_TESTNET_CHAIN_ID = '0x58'; // 88 in hex
 
-// Minimal ABI to get the token balance
+// Minimal ABI to get the token balance and send tokens
 const erc20Abi = [
     "function balanceOf(address owner) view returns (uint256)",
-    "function decimals() view returns (uint8)"
+    "function decimals() view returns (uint8)",
+    "function transfer(address to, uint amount) returns (bool)"
 ];
 
 export default function ProfilePage() {
@@ -29,6 +36,11 @@ export default function ProfilePage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [tokenBalance, setTokenBalance] = useState<string>('0.00');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSendModalOpen, setSendModalOpen] = useState(false);
+  const [isReceiveModalOpen, setReceiveModalOpen] = useState(false);
+  const [sendAmount, setSendAmount] = useState('');
+  const [recipientAddress, setRecipientAddress] = useState('');
+
   const { toast } = useToast();
 
   const xpForNextLevel = 100;
@@ -40,6 +52,24 @@ export default function ProfilePage() {
     { id: 'Mountain Mover', name: 'Mountain Mover', unlocked: false },
     { id: 'River Guardian', name: 'River Guardian', unlocked: false },
   ];
+
+  const fetchBalance = async (provider: ethers.BrowserProvider, account: string) => {
+    try {
+        if (ECLB_TOKEN_CONTRACT_ADDRESS === '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603') {
+            console.warn("Using placeholder token balance. Replace `ECLB_TOKEN_CONTRACT_ADDRESS` in profile page.");
+            setTokenBalance("1,234.56"); // Placeholder balance for UI development
+        } else {
+            const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
+            const balance = await tokenContract.balanceOf(account);
+            const decimals = await tokenContract.decimals();
+            const formattedBalance = ethers.formatUnits(balance, decimals);
+            setTokenBalance(parseFloat(formattedBalance).toFixed(2));
+        }
+    } catch (e) {
+        console.error("Could not fetch balance", e);
+        setTokenBalance("Error");
+    }
+  };
 
   const disconnectWallet = () => {
     setWalletAddress(null);
@@ -63,26 +93,44 @@ export default function ProfilePage() {
     setIsConnecting(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
+      
+      const network = await provider.getNetwork();
+      if (network.chainId.toString() !== BigInt(VICTION_TESTNET_CHAIN_ID).toString()) {
+          try {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: VICTION_TESTNET_CHAIN_ID }],
+            });
+          } catch (switchError: any) {
+             if (switchError.code === 4902) {
+                 // Add Viction Testnet if not present
+                 await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: VICTION_TESTNET_CHAIN_ID,
+                        chainName: 'Viction Testnet',
+                        nativeCurrency: { name: 'VIC', symbol: 'VIC', decimals: 18 },
+                        rpcUrls: ['https://rpc-testnet.viction.xyz'],
+                        blockExplorerUrls: ['https://testnet.vicscan.xyz']
+                    }]
+                 });
+             } else {
+                throw switchError;
+             }
+          }
+      }
+
+      // Re-initialize provider after network switch
+      const newProvider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await newProvider.send("eth_requestAccounts", []);
       
       if (accounts && Array.isArray(accounts) && accounts.length > 0) {
         const account = accounts[0];
         setWalletAddress(account);
-        
-        if (ECLB_TOKEN_CONTRACT_ADDRESS === '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603') {
-            console.warn("Using placeholder token balance. Replace `ECLB_TOKEN_CONTRACT_ADDRESS` in profile page.");
-            setTokenBalance("1,234.56"); // Placeholder balance for UI development
-        } else {
-            const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
-            const balance = await tokenContract.balanceOf(account);
-            const decimals = await tokenContract.decimals();
-            const formattedBalance = ethers.formatUnits(balance, decimals);
-            setTokenBalance(parseFloat(formattedBalance).toFixed(2));
-        }
-
+        await fetchBalance(newProvider, account);
         toast({
             title: "Wallet Connected",
-            description: "Your MetaMask wallet has been successfully connected.",
+            description: "Your Viction wallet has been successfully connected.",
         });
       }
     } catch (error) {
@@ -90,12 +138,37 @@ export default function ProfilePage() {
       toast({
           variant: "destructive",
           title: "Connection Failed",
-          description: "An error occurred while connecting your wallet.",
+          description: "An error occurred while connecting your wallet. Please ensure you are on the Viction Testnet.",
       });
     } finally {
       setIsConnecting(false);
     }
   };
+
+  const handleCopyAddress = () => {
+    if (!walletAddress) return;
+    navigator.clipboard.writeText(walletAddress);
+    toast({
+      title: "Address Copied!",
+      description: "Your wallet address is copied to the clipboard.",
+    });
+  };
+
+  const handleSend = async () => {
+      // This is a placeholder for the actual transaction logic
+      if (!recipientAddress || !sendAmount) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Please fill in all fields.' });
+          return;
+      }
+      setSendModalOpen(false);
+      toast({
+          title: "Transaction Sent (Simulation)",
+          description: `You sent ${sendAmount} $ECLB to ${formatAddress(recipientAddress)}.`,
+      });
+      setRecipientAddress('');
+      setSendAmount('');
+  };
+
 
   const formatAddress = (address: string) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
@@ -144,6 +217,16 @@ export default function ProfilePage() {
                             <span className="text-lg font-semibold text-muted-foreground">$ECLB</span>
                         </div>
                     </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <Button variant="outline" onClick={() => setSendModalOpen(true)}>
+                            <ArrowUpRight className="mr-2 h-4 w-4"/> Send
+                        </Button>
+                        <Button variant="outline" onClick={() => setReceiveModalOpen(true)}>
+                           <ArrowDownLeft className="mr-2 h-4 w-4"/> Receive
+                        </Button>
+                    </div>
+
                     <Button variant="outline" className="w-full" onClick={disconnectWallet}>Disconnect Wallet</Button>
                 </div>
 
@@ -201,6 +284,59 @@ export default function ProfilePage() {
         </Card>
 
       </div>
+
+      {/* Receive Modal */}
+      <Dialog open={isReceiveModalOpen} onOpenChange={setReceiveModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Receive $ECLB</DialogTitle>
+                <DialogDescription>
+                    Show this QR code or share your address to receive tokens.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4 flex flex-col items-center">
+                 <div className="w-full max-w-xs bg-white p-4 rounded-lg shadow-md">
+                    <QRCodeSVG value={walletAddress || ''} />
+                </div>
+                <div className="w-full p-3 bg-secondary rounded-md text-center break-words">
+                    <p className="text-sm font-mono">{walletAddress}</p>
+                </div>
+                <Button onClick={handleCopyAddress} className="w-full">
+                    <Copy className="mr-2 h-4 w-4"/> Copy Address
+                </Button>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setReceiveModalOpen(false)}>Done</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Send Modal */}
+      <Dialog open={isSendModalOpen} onOpenChange={setSendModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Send $ECLB</DialogTitle>
+                <DialogDescription>
+                    Enter the recipient's address and the amount to send.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="recipient">Recipient Address</Label>
+                    <Input id="recipient" value={recipientAddress} onChange={(e) => setRecipientAddress(e.target.value)} placeholder="0x..."/>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="amount">Amount ($ECLB)</Label>
+                    <Input id="amount" type="number" value={sendAmount} onChange={(e) => setSendAmount(e.target.value)} placeholder="0.00"/>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setSendModalOpen(false)}>Cancel</Button>
+                <Button onClick={handleSend}>Send</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </AppShell>
   );
 }
