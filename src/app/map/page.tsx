@@ -104,50 +104,46 @@ export default function MapPage() {
 
   useEffect(() => {
     let watchId: number;
-    let isInitialLoad = true;
-
-    if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newLocation = { lat: latitude, lng: longitude };
-
-          setUserLocation(newLocation);
-          setViewState({
-            longitude,
-            latitude,
-            zoom: 15,
-          });
-          
-          if (isInitialLoad && mapRef.current) {
-            mapRef.current.flyTo({
-              center: [longitude, latitude],
-              zoom: 15,
-              duration: 2000,
-              essential: true,
-            });
-            isInitialLoad = false;
-          }
-        },
-        (error) => {
-          toast({
+    if (!navigator.geolocation) {
+        toast({
             variant: "destructive",
-            title: "Location Error",
-            description: "Could not get your location. Please ensure location services are enabled.",
-          });
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
-        }
-      );
+            title: "Location Services Unavailable",
+            description: "Your browser does not support geolocation.",
+        });
+        return;
     }
 
+    watchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            const newLocation = { lat: latitude, lng: longitude };
+            
+            setUserLocation(newLocation);
+            
+            // This locks the map view to the user's location
+            setViewState(currentViewState => ({
+                ...currentViewState,
+                longitude: longitude,
+                latitude: latitude,
+                zoom: currentViewState.zoom < 14 ? 14 : currentViewState.zoom // Zoom in if not already zoomed
+            }));
+        },
+        (error) => {
+            toast({
+                variant: "destructive",
+                title: "Location Error",
+                description: "Could not get your location. Please ensure location services are enabled.",
+            });
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+        }
+    );
+
     return () => {
-      if (watchId) {
         navigator.geolocation.clearWatch(watchId);
-      }
     };
   }, [toast]);
 
@@ -182,67 +178,52 @@ export default function MapPage() {
       setRewardsModalOpen(true);
     }, 500);
   };
-  
-  const renderMap = () => {
-    if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
-      return (
-        <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
-          <div className="max-w-md">
-              <h2 className="font-bold text-lg text-white">Map Configuration Error</h2>
-              <p className="mt-2 text-sm">Could not load Mapbox. Please add your access token.</p>
-              <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
-                  <li>Create or open the `.env` file in the root of your project.</li>
-                  <li>Add the following line: `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN='your_token_here'`</li>
-                  <li>Replace `'your_token_here'` with your actual token from mapbox.com.</li>
-                  <li>Restart your development server to apply the changes.</li>
-              </ul>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <Map
-        ref={mapRef}
-        {...viewState}
-        style={{width: '100%', height: '100%'}}
-        mapStyle="mapbox://styles/mapbox/outdoors-v12"
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-        interactive={false}
-        onMove={evt => setViewState(evt.viewState)}
-      >
-        {userLocation && (
-          <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
-            <UserLocationMarker />
-          </Marker>
-        )}
-        {pois.map((poi) => {
-          const isVisited = visitedPois.includes(poi.id);
-          return (
-            <Marker
-              key={poi.id}
-              longitude={poi.pos.lng}
-              latitude={poi.pos.lat}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                handlePinClick(poi);
-              }}
-              style={{ cursor: isVisited ? 'default' : 'pointer' }}
-            >
-                <div className="relative">
-                    <MapPin className={`w-8 h-8 drop-shadow-lg ${isVisited ? 'text-gray-600' : 'text-primary'}`} />
-                </div>
-            </Marker>
-          );
-        })}
-      </Map>
-    );
-  }
 
   return (
     <AppShell>
       <div className="relative w-full h-full bg-black">
-        {renderMap()}
+        {!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ? (
+            <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
+                <div className="max-w-md">
+                    <h2 className="font-bold text-lg text-white">Map Configuration Error</h2>
+                    <p className="mt-2 text-sm">Could not load Mapbox. Please add your access token to the `.env` file.</p>
+                </div>
+            </div>
+        ) : (
+            <Map
+                ref={mapRef}
+                {...viewState}
+                onMove={evt => setViewState(evt.viewState)}
+                style={{width: '100%', height: '100%'}}
+                mapStyle="mapbox://styles/mapbox/outdoors-v12"
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+            >
+                {userLocation && (
+                    <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
+                        <UserLocationMarker />
+                    </Marker>
+                )}
+                {pois.map((poi) => {
+                    const isVisited = visitedPois.includes(poi.id);
+                    return (
+                        <Marker
+                            key={poi.id}
+                            longitude={poi.pos.lng}
+                            latitude={poi.pos.lat}
+                            onClick={(e) => {
+                                e.originalEvent.stopPropagation();
+                                handlePinClick(poi);
+                            }}
+                            style={{ cursor: isVisited ? 'default' : 'pointer' }}
+                        >
+                            <div className="relative">
+                                <MapPin className={`w-8 h-8 drop-shadow-lg ${isVisited ? 'text-gray-600' : 'text-primary'}`} />
+                            </div>
+                        </Marker>
+                    );
+                })}
+            </Map>
+        )}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_20%,rgba(0,0,0,0.8)_30%)]" />
       </div>
 
