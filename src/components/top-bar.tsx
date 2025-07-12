@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -20,8 +21,7 @@ export function TopBar() {
         data-ai-hint="profile picture"
       />
       <div className="flex-1">
-        <div className="flex justify-between items-center mb-1">
-          <span className="font-bold text-sm">Lvl {level}</span>
+        <div className="flex justify-end items-center mb-1">
           <span className="text-xs text-muted-foreground">{xp % 100}/{xpForNextLevel} XP</span>
         </div>
         <Progress value={currentXp} className="h-2" />
