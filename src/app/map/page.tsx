@@ -106,6 +106,7 @@ export default function MapPage() {
 
   useEffect(() => {
     let watchId: number;
+    let isInitialLoad = true;
 
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(
@@ -115,18 +116,15 @@ export default function MapPage() {
 
           setUserLocation(newLocation);
           
-          setViewState(prev => ({
-            ...prev,
-            latitude,
-            longitude,
-            zoom: 15 
-          }));
-
-          mapRef.current?.flyTo({
-            center: [longitude, latitude],
-            zoom: 15,
-            duration: 1000
-          });
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: [longitude, latitude],
+              zoom: isInitialLoad ? 15 : mapRef.current.getZoom(),
+              duration: 1000,
+              essential: true,
+            });
+          }
+          if (isInitialLoad) isInitialLoad = false;
         },
         (error) => {
           console.error("Error getting user location:", error);
@@ -204,12 +202,11 @@ export default function MapPage() {
     return (
       <Map
         ref={mapRef}
-        {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        initialViewState={viewState}
         style={{width: '100%', height: '100%'}}
         mapStyle="mapbox://styles/mapbox/outdoors-v12"
         mapboxAccessToken={MAPBOX_TOKEN}
-        interactive={true}
+        interactive={false}
       >
         {userLocation && (
           <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
@@ -320,3 +317,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
