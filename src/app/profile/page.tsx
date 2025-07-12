@@ -54,23 +54,32 @@ export default function ProfilePage() {
     { id: 'River Guardian', name: 'River Guardian', unlocked: false },
   ];
 
-  const fetchBalance = async (provider: ethers.BrowserProvider, account: string) => {
-    try {
-        const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
-        const balance = await tokenContract.balanceOf(account);
-        const decimals = await tokenContract.decimals();
-        const formattedBalance = ethers.formatUnits(balance, decimals);
-        setTokenBalance(parseFloat(formattedBalance).toFixed(2));
-    } catch (e) {
-        console.error("Could not fetch balance", e);
-        setTokenBalance("Error");
-        toast({
-            variant: "destructive",
-            title: "Balance Error",
-            description: "Could not fetch token balance. Make sure the contract is deployed on Viction Testnet.",
-        });
-    }
+  const fetchBalance = async () => {
+      if (!walletAddress) return;
+      try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
+          const balance = await tokenContract.balanceOf(walletAddress);
+          const decimals = await tokenContract.decimals();
+          const formattedBalance = ethers.formatUnits(balance, decimals);
+          setTokenBalance(parseFloat(formattedBalance).toFixed(2));
+      } catch (e) {
+          console.error("Could not fetch balance", e);
+          setTokenBalance("Error");
+          toast({
+              variant: "destructive",
+              title: "Balance Error",
+              description: "Could not fetch token balance. Make sure the contract is deployed on Viction Testnet.",
+          });
+      }
   };
+
+  useEffect(() => {
+    if (walletAddress) {
+      fetchBalance();
+    }
+  }, [walletAddress]);
+
 
   const disconnectWallet = () => {
     setWalletAddress(null);
@@ -120,14 +129,12 @@ export default function ProfilePage() {
           }
       }
 
-      // We re-initialize the provider to ensure it's using the correct, post-switch network.
       const newProvider = new ethers.BrowserProvider(window.ethereum);
       const accounts = await newProvider.send("eth_requestAccounts", []);
       
       if (accounts && Array.isArray(accounts) && accounts.length > 0) {
         const account = accounts[0];
         setWalletAddress(account);
-        await fetchBalance(newProvider, account); // Fetch balance after connection and potential switch
         toast({
             title: "Wallet Connected",
             description: "Your Viction wallet has been successfully connected.",
@@ -193,7 +200,7 @@ export default function ProfilePage() {
             description: `Successfully sent ${sendAmount} $ECLB.`,
         });
 
-        await fetchBalance(provider, walletAddress);
+        await fetchBalance();
         setSendModalOpen(false);
         setRecipientAddress('');
         setSendAmount('');
@@ -385,4 +392,3 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
-
