@@ -34,11 +34,11 @@ export default function CommunityPage() {
     const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
     const [isClient, setIsClient] = useState(false);
+    const [activeSection, setActiveSection] = useState<'location' | 'album' | null>(null);
 
     useEffect(() => {
         setIsClient(true);
     }, []);
-
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -102,6 +102,7 @@ export default function CommunityPage() {
         setNewAlbumName('');
         setExistingAlbumId('');
         setVisibility('public');
+        setActiveSection(null);
     };
 
     const renderAlbumGrid = () => {
@@ -159,6 +160,10 @@ export default function CommunityPage() {
             </div>
         );
     }
+    
+    const handleSectionToggle = (section: 'location' | 'album') => {
+        setActiveSection(prev => prev === section ? null : section);
+    };
 
     return (
         <AppShell>
@@ -215,7 +220,7 @@ export default function CommunityPage() {
                                 </div>
                             )}
 
-                            <Collapsible>
+                            <div className="space-y-2">
                                 <div className="border rounded-lg p-2 flex justify-between items-center">
                                     <span className="text-sm font-medium">Add to your post</span>
                                     <div className="flex items-center gap-1">
@@ -224,54 +229,55 @@ export default function CommunityPage() {
                                         </Label>
                                         <Input id="media-upload-fb" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
                                         
-                                        <CollapsibleTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary">
-                                                <MapPin className="h-5 w-5 text-red-500" />
-                                            </Button>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary">
-                                                <BookPlus className="h-5 w-5 text-blue-500" />
-                                            </Button>
-                                        </CollapsibleTrigger>
+                                        <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary" onClick={() => handleSectionToggle('location')}>
+                                            <MapPin className="h-5 w-5 text-red-500" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary" onClick={() => handleSectionToggle('album')}>
+                                            <BookPlus className="h-5 w-5 text-blue-500" />
+                                        </Button>
                                     </div>
                                 </div>
-                                <CollapsibleContent className="space-y-2 pt-4">
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input placeholder="Tag Location" className="pl-9" value={location} onChange={e => setLocation(e.target.value)} />
-                                </div>
 
-                                    <Select onValueChange={(val) => {
-                                        const isNew = val === "new-album-option";
-                                        setAlbumSelection(isNew ? 'new' : 'existing');
-                                        if (!isNew) {
-                                            setExistingAlbumId(val);
-                                        } else {
-                                            setExistingAlbumId('');
-                                        }
-                                    }}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Choose an album for your post" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="new-album-option">
-                                                <div className="flex items-center gap-2"><PlusCircle className="h-4 w-4" />Create New Album</div>
-                                            </SelectItem>
-                                            {albums && albums.map(album => (
-                                                <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                {activeSection === 'location' && (
+                                     <div className="relative pt-2">
+                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input placeholder="Tag Location" className="pl-9" value={location} onChange={e => setLocation(e.target.value)} />
+                                    </div>
+                                )}
 
-                                    {albumSelection === 'new' && (
-                                        <div className="relative mt-2">
-                                            <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input placeholder="New Album Name" className="pl-9" value={newAlbumName} onChange={e => setNewAlbumName(e.target.value)} />
-                                        </div>
-                                    )}
-                                </CollapsibleContent>
-                            </Collapsible>
+                                {activeSection === 'album' && (
+                                    <div className="space-y-2 pt-2">
+                                        <Select onValueChange={(val) => {
+                                            const isNew = val === "new-album-option";
+                                            setAlbumSelection(isNew ? 'new' : 'existing');
+                                            if (!isNew) {
+                                                setExistingAlbumId(val);
+                                            } else {
+                                                setExistingAlbumId('');
+                                            }
+                                        }}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Choose an album for your post" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="new-album-option">
+                                                    <div className="flex items-center gap-2"><PlusCircle className="h-4 w-4" />Create New Album</div>
+                                                </SelectItem>
+                                                {albums && albums.map(album => (
+                                                    <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        {albumSelection === 'new' && (
+                                            <div className="relative mt-2">
+                                                <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input placeholder="New Album Name" className="pl-9" value={newAlbumName} onChange={e => setNewAlbumName(e.target.value)} />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </ScrollArea>
                     <DialogFooter className="p-4 pt-0 border-t">
