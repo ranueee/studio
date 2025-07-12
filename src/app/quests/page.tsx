@@ -9,8 +9,20 @@ import { Label } from '@/components/ui/label';
 import { suggestOptimalEcoRoute, type SuggestOptimalEcoRouteOutput } from '@/ai/flows/suggest-route';
 import { Loader, Wand2, Route, Trees, CheckCircle, MapPin } from 'lucide-react';
 
-const availableInterests = ['Beaches', 'Island Hopping', 'Waterfalls', 'Cave Exploration', 'Historical Sites', 'Local Food'];
-const availablePois = ['Hundred Islands National Park', 'Patar Beach', 'Enchanted Cave', 'Bolinao Falls 1', 'Cape Bolinao Lighthouse', 'Sundowners Beach Club'];
+const availableInterests = ['Beaches', 'Island Hopping', 'Waterfalls', 'Cave Exploration', 'Historical Sites', 'Local Food', 'Pilgrimage Sites', 'Nature Parks', 'Farm Tourism'];
+const availablePois = [
+    'Hundred Islands National Park (Alaminos)',
+    'Patar Beach (Bolinao)',
+    'Enchanted Cave (Bolinao)',
+    'Bolinao Falls 1',
+    'Cape Bolinao Lighthouse',
+    'Lingayen Gulf Beach',
+    'Manaoag Church',
+    'Tayug Sunflower Maze',
+    'Dasol Salt Farms',
+    'Tondol Beach (Anda)',
+    'Death Pool (Cabongaoan Beach, Burgos)'
+];
 
 export default function QuestsPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -29,7 +41,7 @@ export default function QuestsPage() {
     setSuggestedRoute(null);
     try {
       const result = await suggestOptimalEcoRoute({
-        currentLocation: 'Bolinao, Pangasinan, Philippines',
+        currentLocation: 'Pangasinan, Philippines',
         availablePois,
         interests: selectedInterests,
       });

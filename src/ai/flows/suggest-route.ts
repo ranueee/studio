@@ -44,22 +44,22 @@ const prompt = ai.definePrompt({
   name: 'suggestOptimalEcoRoutePrompt',
   input: {schema: SuggestOptimalEcoRouteInputSchema},
   output: {schema: SuggestOptimalEcoRouteOutputSchema},
-  prompt: `You are an expert ecotourism guide for the Philippines. Your task is to create an optimal travel itinerary.
+  prompt: `You are an expert ecotourism guide for the province of Pangasinan in the Philippines. Your task is to create an optimal travel itinerary.
 
-You will be given the user's current location, a list of available points of interest (POIs), and their specific interests.
+You will be given the user's general location, a list of available points of interest (POIs) spread across Pangasinan, and their specific interests.
 
 **Context:**
-- User's Current Location: {{{currentLocation}}}
+- User's General Location: {{{currentLocation}}}
 - Available POIs: {{#each availablePois}} - {{{this}}} {{/each}}
 - User's Interests: {{#each interests}} - {{{this}}} {{/each}}
 
 **Your Goal:**
-Suggest an optimal, logical route that connects 2-4 of the available POIs.
+Suggest an optimal, logical route that connects 2-4 of the available POIs for a well-paced trip.
 
 **Instructions:**
-1.  **Analyze Interests:** Prioritize POIs that directly match the user's interests. For example, if they like 'Historical Sites', prioritize the lighthouse. If they like 'Waterfalls', prioritize Bolinao Falls.
-2.  **Create a Logical Path:** Arrange the selected POIs in a sequence that makes geographical sense for a day trip. Assume travel between locations.
-3.  **Provide Reasoning:** In the 'reasoning' field, briefly explain *why* you chose this specific route. Mention how it aligns with the user's interests and the flow of travel. For example: "This route starts at the beach for morning relaxation, then moves inland to the falls for an afternoon adventure, aligning with your interests in both beach life and nature."
+1.  **Analyze Interests:** Prioritize POIs that directly match the user's interests. For example, if they like 'Pilgrimage Sites', Manaoag Church is a must. If they like 'Island Hopping', Hundred Islands is the top choice.
+2.  **Create a Logical Path:** The POIs are in different towns. Arrange the selected POIs in a sequence that makes geographical sense for travel. For instance, grouping spots in Bolinao and Anda together is logical, while jumping from Alaminos to Tayug and back to Bolinao is not efficient for a single day.
+3.  **Provide Reasoning:** In the 'reasoning' field, briefly explain *why* you chose this specific route. Mention how it aligns with the user's interests and the geographical flow of travel. For example: "This route focuses on the coastal beauty of western Pangasinan, starting with the iconic Hundred Islands and then moving to the serene beaches of Bolinao, which aligns with your interests in islands and beaches."
 
 Generate the 'optimalRoute' as an array of POI names and the 'reasoning' as a descriptive string.
   `,
