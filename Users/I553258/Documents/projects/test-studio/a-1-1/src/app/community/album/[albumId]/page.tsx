@@ -197,12 +197,21 @@ export default function AlbumDetailPage() {
                             <p className="text-sm text-muted-foreground">{album.location}</p>
                         </div>
                     </div>
-                    <Button size="sm" onClick={() => setCreatePostOpen(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4"/> Add Post
-                    </Button>
                 </div>
 
                 <div className="space-y-4">
+                     <Card>
+                        <CardContent className="p-4 flex items-center gap-4">
+                             <Avatar>
+                                <AvatarImage src="https://placehold.co/80x80.png" />
+                                <AvatarFallback>E</AvatarFallback>
+                            </Avatar>
+                            <Button variant="outline" className="w-full justify-start text-muted-foreground" onClick={() => setCreatePostOpen(true)}>
+                                Create Another Post...
+                            </Button>
+                        </CardContent>
+                    </Card>
+
                     {albumPosts.length > 0 ? (
                         albumPosts.map(post => <PostCard key={post.id} post={post} onLike={toggleLike} onComment={addComment} />)
                     ) : (
