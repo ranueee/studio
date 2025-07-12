@@ -113,22 +113,27 @@ export default function MapPage() {
           const newLocation = { lat: latitude, lng: longitude };
 
           setUserLocation(newLocation);
+          setViewState({
+            longitude,
+            latitude,
+            zoom: 15,
+          });
           
-          if (mapRef.current) {
+          if (isInitialLoad && mapRef.current) {
             mapRef.current.flyTo({
               center: [longitude, latitude],
               zoom: 15,
-              duration: 1000,
+              duration: 2000,
               essential: true,
             });
+            isInitialLoad = false;
           }
-          if (isInitialLoad) isInitialLoad = false;
         },
         (error) => {
           toast({
             variant: "destructive",
             title: "Location Error",
-            description: "Could not get your location. Please ensure location services are enabled in your browser and system settings.",
+            description: "Could not get your location. Please ensure location services are enabled.",
           });
         },
         {
@@ -199,11 +204,12 @@ export default function MapPage() {
     return (
       <Map
         ref={mapRef}
-        initialViewState={viewState}
+        {...viewState}
         style={{width: '100%', height: '100%'}}
         mapStyle="mapbox://styles/mapbox/outdoors-v12"
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         interactive={false}
+        onMove={evt => setViewState(evt.viewState)}
       >
         {userLocation && (
           <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
@@ -314,5 +320,3 @@ export default function MapPage() {
     </AppShell>
   );
 }
-
-    
