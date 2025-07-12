@@ -127,11 +127,10 @@ export default function MapPage() {
           if (isInitialLoad) isInitialLoad = false;
         },
         (error) => {
-          console.error("Error getting user location:", error);
           toast({
             variant: "destructive",
             title: "Location Error",
-            description: "Could not get your location. Please ensure location services are enabled.",
+            description: "Could not get your location. Please ensure location services are enabled in your browser and system settings.",
           });
         },
         {
