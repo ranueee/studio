@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function CommunityPage() {
     const { albums, addPost } = useApp();
@@ -145,96 +146,103 @@ export default function CommunityPage() {
                     <DialogHeader className="p-4 border-b">
                         <DialogTitle className="text-center text-xl font-bold">Create Post</DialogTitle>
                     </DialogHeader>
-                    <div className="p-4 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Avatar>
-                                <AvatarImage src="https://placehold.co/80x80.png" />
-                                <AvatarFallback>E</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">Eco-Explorer</p>
-                                <Select value={visibility} onValueChange={(v: 'public' | 'private') => setVisibility(v)}>
-                                    <SelectTrigger className="h-7 px-2 text-xs w-auto gap-1">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="public"><div className="flex items-center gap-1.5"><Globe className="h-3 w-3" /> Public</div></SelectItem>
-                                        <SelectItem value="private"><div className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Private</div></SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <Textarea 
-                            placeholder="What's on your mind, Eco-Explorer?" 
-                            value={caption} 
-                            onChange={e => setCaption(e.target.value)} 
-                            className="min-h-[120px] text-base border-none focus-visible:ring-0 shadow-none p-0"
-                        />
-                        
-                        {mediaPreview && (
-                            <div className="relative border rounded-lg overflow-hidden">
-                                <Image src={mediaPreview} alt="Preview" width={400} height={300} className="w-full object-cover" />
-                                <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7" onClick={() => setMediaPreview(null)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-
-                        <Collapsible>
-                            <div className="border rounded-lg p-2 flex justify-between items-center">
-                                <span className="text-sm font-medium">Add to your post</span>
-                                <div className="flex items-center gap-1">
-                                    <Label htmlFor="media-upload-fb" className="cursor-pointer p-2 rounded-full hover:bg-secondary">
-                                        <ImageIcon className="h-5 w-5 text-green-500" />
-                                    </Label>
-                                    <Input id="media-upload-fb" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
-                                    
-                                    <CollapsibleTrigger asChild>
-                                       <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary">
-                                            <BookPlus className="h-5 w-5 text-blue-500" />
-                                        </Button>
-                                    </CollapsibleTrigger>
+                    <ScrollArea className="max-h-[70vh]">
+                        <div className="p-4 space-y-4">
+                            <div className="flex items-center gap-3">
+                                <Avatar>
+                                    <AvatarImage src="https://placehold.co/80x80.png" />
+                                    <AvatarFallback>E</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">Eco-Explorer</p>
+                                    <Select value={visibility} onValueChange={(v: 'public' | 'private') => setVisibility(v)}>
+                                        <SelectTrigger className="h-7 px-2 text-xs w-auto gap-1">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="public"><div className="flex items-center gap-1.5"><Globe className="h-3 w-3" /> Public</div></SelectItem>
+                                            <SelectItem value="private"><div className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Private</div></SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
-                            <CollapsibleContent className="space-y-2 pt-4">
-                               <div className="relative">
-                                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="Tag Location" className="pl-9" value={location} onChange={e => setLocation(e.target.value)} />
-                               </div>
 
-                                 <Select onValueChange={(val) => {
-                                    const isNew = val === "new-album-option";
-                                    setAlbumSelection(isNew ? 'new' : 'existing');
-                                    if (!isNew) {
-                                        setExistingAlbumId(val);
-                                    } else {
-                                        setExistingAlbumId('');
-                                    }
-                                }}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Choose an album for your post" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="new-album-option">
-                                            <div className="flex items-center gap-2"><PlusCircle className="h-4 w-4" />Create New Album</div>
-                                        </SelectItem>
-                                        {albums && albums.map(album => (
-                                            <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <Textarea 
+                                placeholder="What's on your mind, Eco-Explorer?" 
+                                value={caption} 
+                                onChange={e => setCaption(e.target.value)} 
+                                className="min-h-[120px] text-base border-none focus-visible:ring-0 shadow-none p-0"
+                            />
+                            
+                            {mediaPreview && (
+                                <div className="relative border rounded-lg overflow-hidden">
+                                    <Image src={mediaPreview} alt="Preview" width={400} height={300} className="w-full object-cover" />
+                                    <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7" onClick={() => setMediaPreview(null)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
 
-                                {albumSelection === 'new' && (
-                                    <div className="relative mt-2">
-                                        <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input placeholder="New Album Name" className="pl-9" value={newAlbumName} onChange={e => setNewAlbumName(e.target.value)} />
+                            <Collapsible>
+                                <div className="border rounded-lg p-2 flex justify-between items-center">
+                                    <span className="text-sm font-medium">Add to your post</span>
+                                    <div className="flex items-center gap-1">
+                                        <Label htmlFor="media-upload-fb" className="cursor-pointer p-2 rounded-full hover:bg-secondary">
+                                            <ImageIcon className="h-5 w-5 text-green-500" />
+                                        </Label>
+                                        <Input id="media-upload-fb" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
+                                        
+                                        <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary">
+                                                <MapPin className="h-5 w-5 text-red-500" />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="p-2 rounded-full hover:bg-secondary">
+                                                <BookPlus className="h-5 w-5 text-blue-500" />
+                                            </Button>
+                                        </CollapsibleTrigger>
                                     </div>
-                                )}
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </div>
-                    <DialogFooter className="p-4 pt-0">
+                                </div>
+                                <CollapsibleContent className="space-y-2 pt-4">
+                                <div className="relative">
+                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input placeholder="Tag Location" className="pl-9" value={location} onChange={e => setLocation(e.target.value)} />
+                                </div>
+
+                                    <Select onValueChange={(val) => {
+                                        const isNew = val === "new-album-option";
+                                        setAlbumSelection(isNew ? 'new' : 'existing');
+                                        if (!isNew) {
+                                            setExistingAlbumId(val);
+                                        } else {
+                                            setExistingAlbumId('');
+                                        }
+                                    }}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose an album for your post" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="new-album-option">
+                                                <div className="flex items-center gap-2"><PlusCircle className="h-4 w-4" />Create New Album</div>
+                                            </SelectItem>
+                                            {albums && albums.map(album => (
+                                                <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {albumSelection === 'new' && (
+                                        <div className="relative mt-2">
+                                            <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input placeholder="New Album Name" className="pl-9" value={newAlbumName} onChange={e => setNewAlbumName(e.target.value)} />
+                                        </div>
+                                    )}
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </div>
+                    </ScrollArea>
+                    <DialogFooter className="p-4 pt-0 border-t">
                         <Button onClick={handleCreatePost} className="w-full" disabled={!mediaPreview}>Post</Button>
                     </DialogFooter>
                 </DialogContent>
@@ -242,3 +250,5 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
+
+    
