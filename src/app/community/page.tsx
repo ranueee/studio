@@ -209,8 +209,6 @@ export default function CommunityPage() {
             visibility: newPostVisibility,
             timestamp: new Date(),
             ...mediaData,
-            likes: 0,
-            comments: [],
         };
 
         if (newPostMedia) {
@@ -411,3 +409,5 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
+
+    

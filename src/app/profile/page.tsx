@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2, BookImage } from 'lucide-react';
+import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from '@/components/qr-code';
@@ -393,3 +393,5 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
+
+    
