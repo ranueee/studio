@@ -31,7 +31,7 @@ let pois = [
   { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', isAlbum: true },
 ];
 
-let initialPosts = [
+let initialPosts: Post[] = [
     {
         id: 1,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
@@ -39,8 +39,11 @@ let initialPosts = [
         imageHint: 'philippines beach sunset',
         caption: 'Sunsets in Pangasinan are unreal!',
         locationId: 'patar-beach',
+        albumName: 'Patar Beach Adventures',
         visibility: 'Public',
         timestamp: new Date('2023-10-26T18:25:43.511Z'),
+        likes: 12,
+        comments: [],
     },
     {
         id: 2,
@@ -49,8 +52,11 @@ let initialPosts = [
         imageHint: 'philippines islands boat',
         caption: 'Island hopping day was a success!',
         locationId: 'hundred-islands',
+        albumName: 'Hundred Islands Trip',
         visibility: 'Public',
         timestamp: new Date('2023-10-25T12:10:11.511Z'),
+        likes: 25,
+        comments: [],
     },
     {
         id: 3,
@@ -59,8 +65,11 @@ let initialPosts = [
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
         locationId: 'enchanted-cave',
+        albumName: 'Bolinao Getaway',
         visibility: 'Private',
         timestamp: new Date('2023-10-24T09:30:00.511Z'),
+        likes: 5,
+        comments: [],
     },
     {
         id: 4,
@@ -69,8 +78,11 @@ let initialPosts = [
         imageHint: 'philippines lighthouse coast',
         caption: 'The view from the top is worth the climb!',
         locationId: 'cape-bolinao',
+        albumName: 'Bolinao Getaway',
         visibility: 'Public',
         timestamp: new Date('2023-10-23T15:00:21.511Z'),
+        likes: 18,
+        comments: [],
     },
     {
         id: 5,
@@ -79,8 +91,11 @@ let initialPosts = [
         imageHint: 'philippines white sand beach',
         caption: 'Another beautiful day at the beach.',
         locationId: 'patar-beach',
+        albumName: 'Patar Beach Adventures',
         visibility: 'Public',
         timestamp: new Date('2023-10-27T11:45:00.511Z'),
+        likes: 9,
+        comments: [],
     },
 ];
 
@@ -92,8 +107,11 @@ type Post = {
     video?: string;
     caption: string;
     locationId: string;
+    albumName?: string;
     visibility: 'Public' | 'Private';
     timestamp: Date;
+    likes: number;
+    comments: any[];
 };
 
 export default function AlbumDetailPage() {
@@ -113,11 +131,10 @@ export default function AlbumDetailPage() {
     const fetchAlbumData = () => {
         setLoading(true);
         // In a real app, this data would be fetched. We are sorting by most recent first.
-        const albumPosts = initialPosts.filter(p => p.locationId === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+        const albumPosts = initialPosts.filter(p => p.albumName?.toLowerCase().replace(/\s+/g, '-') === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
         
         setPosts(albumPosts);
-        const location = pois.find(p => p.id === albumId);
-        const friendlyAlbumName = location?.name || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const friendlyAlbumName = albumPosts[0]?.albumName || albumId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         setAlbumName(friendlyAlbumName);
         setLoading(false);
     };
@@ -146,7 +163,7 @@ export default function AlbumDetailPage() {
         // Simulate deleting from the "database"
         initialPosts = initialPosts.filter(p => p.id !== postId);
         // Update the state to re-render
-        setPosts(posts.filter(p => p.id !== postId));
+        fetchAlbumData();
         toast({
             title: "Post Deleted",
             description: "The post has been removed from the album.",
@@ -188,6 +205,9 @@ export default function AlbumDetailPage() {
                         <ArrowLeft />
                     </Button>
                     <h1 className="text-2xl font-bold">{albumName}</h1>
+                </div>
+                 <div className="flex items-center justify-end">
+                    <Button>Add More Photos</Button>
                 </div>
 
                 <div className="space-y-4">
@@ -290,7 +310,7 @@ export default function AlbumDetailPage() {
                      {!loading && posts.length === 0 && (
                         <div className="text-center text-muted-foreground py-10">
                             <p>This album is empty.</p>
-                            <Button variant="link" onClick={() => router.push('/community')}>Go back to albums</Button>
+                            <Button variant="link" onClick={() => router.push('/community')}>Go back to community</Button>
                         </div>
                     )}
                 </div>
@@ -354,3 +374,5 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
+
+    

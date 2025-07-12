@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2 } from 'lucide-react';
+import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2, BookImage } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from '@/components/qr-code';
@@ -240,6 +241,13 @@ export default function ProfilePage() {
         </div>
 
         <Separator />
+        
+        <Link href="/profile/albums" passHref>
+            <Button variant="outline" className="w-full">
+                <BookImage className="mr-2 h-4 w-4" /> My Albums
+            </Button>
+        </Link>
+
 
         {/* Eco-Wallet */}
         <Card className="w-full">
@@ -392,5 +400,7 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
+
+    
 
     
