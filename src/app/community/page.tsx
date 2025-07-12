@@ -120,7 +120,7 @@ export default function CommunityPage() {
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     
-    const existingAlbumNames = [...new Set(initialPosts.filter(p => p.albumName).map(p => p.albumName))];
+    const [existingAlbumNames, setExistingAlbumNames] = useState<string[]>([]);
 
     const processPostsIntoAlbums = () => {
       setLoading(true);
@@ -148,6 +148,7 @@ export default function CommunityPage() {
       });
 
       setAlbums(createdAlbums.sort((a, b) => a.albumName.localeCompare(b.albumName)));
+      setExistingAlbumNames([...new Set(initialPosts.filter(p => p.albumName).map(p => p.albumName))]);
       setLoading(false);
     };
 
@@ -191,6 +192,10 @@ export default function CommunityPage() {
                 }
                 finalAlbumName = newAlbumName.trim();
             } else if (albumSelectionMode === 'existing') {
+                 if (!selectedAlbum) {
+                     toast({ variant: 'destructive', title: 'Missing Album', description: 'Please select an existing album.' });
+                     return;
+                }
                 finalAlbumName = selectedAlbum;
             }
         }
@@ -348,18 +353,18 @@ export default function CommunityPage() {
                             </div>
 
                             {newPostMedia && (
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label>Album (Optional)</Label>
-                                        <div className="flex gap-2">
-                                            <Button variant={albumSelectionMode === 'new' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('new')} className="flex-1">
-                                                Create New
-                                            </Button>
-                                            <Button variant={albumSelectionMode === 'existing' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('existing')} className="flex-1" disabled={existingAlbumNames.length === 0}>
-                                                Use Existing
-                                            </Button>
+                                <div className="space-y-4 p-4 border rounded-lg">
+                                    <Label>Album</Label>
+                                    <RadioGroup value={albumSelectionMode || ''} onValueChange={(value) => setAlbumSelectionMode(value as any)} className="flex pt-2 gap-4">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="existing" id="r-existing" />
+                                            <Label htmlFor="r-existing">Add to Existing</Label>
                                         </div>
-                                    </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="new" id="r-new" />
+                                            <Label htmlFor="r-new">Create New</Label>
+                                        </div>
+                                    </RadioGroup>
 
                                     {albumSelectionMode === 'new' && (
                                         <Input 
@@ -370,9 +375,9 @@ export default function CommunityPage() {
                                     )}
 
                                     {albumSelectionMode === 'existing' && (
-                                        <Select onValueChange={setSelectedAlbum} value={selectedAlbum}>
+                                        <Select onValueChange={setSelectedAlbum} value={selectedAlbum} disabled={existingAlbumNames.length === 0}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select an existing album" />
+                                                <SelectValue placeholder={existingAlbumNames.length === 0 ? "No albums yet" : "Select an album"} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {existingAlbumNames.map(name => (
