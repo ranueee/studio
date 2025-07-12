@@ -101,7 +101,7 @@ export default function CommunityPage() {
                     </Button>
                 </div>
 
-                {albums.length > 0 ? (
+                {albums && albums.length > 0 ? (
                     <div className="grid grid-cols-2 gap-4">
                         {albums.map(album => (
                             <Link href={`/community/album/${album.id}`} key={album.id}>
@@ -180,8 +180,8 @@ export default function CommunityPage() {
                                     <Label htmlFor="new-album">Create New</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="existing" id="existing-album" disabled={albums.length === 0} />
-                                    <Label htmlFor="existing-album" className={albums.length === 0 ? 'text-muted-foreground' : ''}>Add to Existing</Label>
+                                    <RadioGroupItem value="existing" id="existing-album" disabled={!albums || albums.length === 0} />
+                                    <Label htmlFor="existing-album" className={!albums || albums.length === 0 ? 'text-muted-foreground' : ''}>Add to Existing</Label>
                                 </div>
                             </RadioGroup>
 
@@ -196,7 +196,7 @@ export default function CommunityPage() {
                                         <SelectValue placeholder="Select an album" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {albums.map(album => (
+                                        {albums && albums.map(album => (
                                             <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
                                         ))}
                                     </SelectContent>
