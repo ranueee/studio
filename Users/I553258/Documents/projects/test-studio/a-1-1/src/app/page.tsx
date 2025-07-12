@@ -35,7 +35,7 @@ export default function OnboardingPage() {
           </div>
           <div className="w-full max-w-sm space-y-3">
             <Button asChild className="w-full !text-black !bg-white hover:!bg-gray-200">
-              <Link href="/community">
+              <Link href="/map">
                 <GoogleIcon className="mr-2" />
                 Sign in with Google
               </Link>
@@ -46,3 +46,5 @@ export default function OnboardingPage() {
     </main>
   );
 }
+
+    
