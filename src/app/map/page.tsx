@@ -185,7 +185,7 @@ export default function MapPage() {
     <AppShell>
       <div className="relative w-full h-full bg-black">
         {renderMap()}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.3)_0%,rgba(0,0,0,0.8)_20%,rgba(0,0,0,1)_50%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.6)_0%,rgba(0,0,0,0.9)_25%,rgba(0,0,0,1)_60%)]" />
       </div>
 
       {/* Location Details Bottom Sheet */}
