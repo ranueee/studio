@@ -22,8 +22,10 @@ export function MapboxMap() {
             <h2 className="font-bold text-lg text-white">Map Configuration Error</h2>
             <p className="mt-2 text-sm">Could not load Mapbox. Please add your access token.</p>
             <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
-                <li>Ensure `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is set in your `.env` file.</li>
-                <li>Verify the token is correct and has the required scopes enabled in your Mapbox account.</li>
+                <li>Create or open the `.env` file in the root of your project.</li>
+                <li>Add the following line: `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN='your_token_here'`</li>
+                <li>Replace `'your_token_here'` with your actual token from mapbox.com.</li>
+                <li>Restart your development server to apply the changes.</li>
             </ul>
         </div>
       </div>
@@ -45,5 +47,3 @@ export function MapboxMap() {
     </div>
   );
 }
-
-    
