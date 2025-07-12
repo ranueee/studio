@@ -1,25 +1,26 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Share2, Globe, Lock, Send, Copy } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Globe, Lock, Send, Copy, ImagePlus, Video, MoreVertical, Trash2 } from 'lucide-react';
 import { generateImage, type GenerateImageOutput } from '@/ai/flows/generate-image-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>;
-
 
 const initialDiaryPosts = [
   {
@@ -66,14 +67,31 @@ const initialDiaryPosts = [
   },
 ];
 
-type DiaryPost = typeof initialDiaryPosts[0];
+type DiaryPost = {
+    id: number;
+    user: {
+        name: string;
+        avatar: string;
+        avatarHint: string;
+    };
+    image?: string;
+    imageHint?: string;
+    video?: string;
+    location: string;
+    caption: string;
+    likes: number;
+    comments: number;
+};
 
 export default function CommunityPage() {
   const [diaryPosts, setDiaryPosts] = useState<DiaryPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPostContent, setNewPostContent] = useState('');
+  const [addWithImage, setAddWithImage] = useState(false);
   const [postVisibility, setPostVisibility] = useState('Public');
   const [isShareModalOpen, setShareModalOpen] = useState(false);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,14 +99,16 @@ export default function CommunityPage() {
       setLoading(true);
       const updatedPosts = await Promise.all(
         initialDiaryPosts.map(async (post): Promise<DiaryPost> => {
-          try {
-            const result: GenerateImageOutput = await generateImage({ prompt: post.imageHint });
-            return { ...post, image: result.imageUrl };
-          } catch (error) {
-            console.error(`Failed to generate image for: ${post.imageHint}`, error);
-            // Fallback to a placeholder if generation fails
-            return { ...post, image: 'https://placehold.co/600x400.png' };
+          if (post.imageHint) {
+            try {
+              const result: GenerateImageOutput = await generateImage({ prompt: post.imageHint });
+              return { ...post, image: result.imageUrl };
+            } catch (error) {
+              console.error(`Failed to generate image for: ${post.imageHint}`, error);
+              return { ...post, image: 'https://placehold.co/600x400.png' };
+            }
           }
+          return post;
         })
       );
       setDiaryPosts(updatedPosts);
@@ -98,8 +118,19 @@ export default function CommunityPage() {
     fetchImages();
   }, []);
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!newPostContent.trim()) return;
+
+    let imageUrl: string | undefined = undefined;
+    if (addWithImage) {
+        try {
+            toast({ title: "Generating Image...", description: "Your AI-powered photo is being created."});
+            const result = await generateImage({ prompt: newPostContent.substring(0, 50) });
+            imageUrl = result.imageUrl;
+        } catch (error) {
+            toast({ variant: "destructive", title: "Image Generation Failed", description: "Could not generate image. Posting text only."});
+        }
+    }
 
     const newPost: DiaryPost = {
       id: Date.now(),
@@ -108,8 +139,7 @@ export default function CommunityPage() {
         avatar: 'https://placehold.co/40x40.png',
         avatarHint: 'profile picture',
       },
-      image: 'https://placehold.co/600x400.png',
-      imageHint: 'nature travel',
+      image: imageUrl,
       location: 'Pangasinan',
       caption: newPostContent,
       likes: 0,
@@ -118,6 +148,7 @@ export default function CommunityPage() {
 
     setDiaryPosts([newPost, ...diaryPosts]);
     setNewPostContent('');
+    setAddWithImage(false);
     toast({
       title: "Post Created!",
       description: "Your new adventure has been shared with the community.",
@@ -139,6 +170,22 @@ export default function CommunityPage() {
     });
   }
 
+  const openDeleteModal = (postId: number) => {
+    setPostToDelete(postId);
+    setDeleteModalOpen(true);
+  }
+
+  const handleDeletePost = () => {
+    if (postToDelete === null) return;
+    setDiaryPosts(diaryPosts.filter(p => p.id !== postToDelete));
+    setDeleteModalOpen(false);
+    setPostToDelete(null);
+    toast({
+        title: "Post Deleted",
+        description: "Your post has been successfully removed.",
+    });
+  }
+
   return (
     <AppShell>
       <div className="p-4 space-y-6">
@@ -156,26 +203,46 @@ export default function CommunityPage() {
               onChange={(e) => setNewPostContent(e.target.value)}
             />
             <div className="flex items-center justify-between">
-              <Select value={postVisibility} onValueChange={setPostVisibility}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Visibility" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Public">
-                    <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4"/> Public
-                    </div>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        size="icon" 
+                        variant={addWithImage ? 'secondary': 'ghost'} 
+                        onClick={() => setAddWithImage(!addWithImage)}
+                        title="Add AI Generated Image"
+                    >
+                        <ImagePlus/>
+                    </Button>
+                     <Button 
+                        size="icon" 
+                        variant='ghost' 
+                        disabled
+                        title="Add Video (Coming Soon)"
+                    >
+                        <Video/>
+                    </Button>
+                </div>
+              <div className="flex items-center gap-2">
+                <Select value={postVisibility} onValueChange={setPostVisibility}>
+                    <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Visibility" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="Public">
+                        <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4"/> Public
+                        </div>
+                        </SelectItem>
+                    <SelectItem value="Private">
+                        <div className="flex items-center gap-2">
+                            <Lock className="w-4 h-4"/> Private
+                        </div>
                     </SelectItem>
-                  <SelectItem value="Private">
-                    <div className="flex items-center gap-2">
-                        <Lock className="w-4 h-4"/> Private
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={handlePost} disabled={!newPostContent.trim()}>
-                Post <Send className="ml-2"/>
-              </Button>
+                    </SelectContent>
+                </Select>
+                <Button onClick={handlePost} disabled={!newPostContent.trim()}>
+                    Post <Send className="ml-2"/>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -190,20 +257,35 @@ export default function CommunityPage() {
                       <AvatarImage src={post.user.avatar} alt={post.user.name} data-ai-hint={post.user.avatarHint} />
                       <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold">{post.user.name}</p>
                       <p className="text-sm text-muted-foreground">{post.location}</p>
                     </div>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => openDeleteModal(post.id)} className="text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                     </DropdownMenu>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <Image
-                      src={post.image}
-                      alt={post.caption}
-                      width={600}
-                      height={400}
-                      className="w-full h-auto object-cover"
-                      data-ai-hint={post.imageHint}
-                    />
+                    {post.image && (
+                        <Image
+                          src={post.image}
+                          alt={post.caption}
+                          width={600}
+                          height={400}
+                          className="w-full h-auto object-cover"
+                          data-ai-hint={post.imageHint}
+                        />
+                    )}
                     <p className="p-4 text-sm">{post.caption}</p>
                   </CardContent>
                   <CardFooter className="p-2 border-t">
@@ -273,6 +355,25 @@ export default function CommunityPage() {
             </div>
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={isDeleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Delete Post</DialogTitle>
+                <DialogDescription>
+                    Are you sure you want to delete this post? This action cannot be undone.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="ghost">Cancel</Button>
+                </DialogClose>
+                <Button variant="destructive" onClick={handleDeletePost}>Delete</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+
+    
