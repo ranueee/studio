@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
-import { Star, Binoculars, HelpCircle, Check, Award } from 'lucide-react';
+import { Star, Binoculars, HelpCircle, Check, Award, MapPin as MapPinIcon } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
-import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
+import Map, { Marker } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const pois = [
   { id: 'hundred-islands', name: 'Hundred Islands', pos: { lat: 16.1953, lng: 119.9831 }, icon: Star, rewards: { xp: 50, eclb: 10 }, challenge: { text: 'Collect 1 bag of trash', xp: 100, eclb: 25 }, desc: 'A protected area featuring 124 islands at high tide. A perfect spot for island hopping and snorkeling.', image: 'https://placehold.co/600x400.png', hint: 'philippines islands' },
@@ -20,96 +21,12 @@ const pois = [
 
 type POI = typeof pois[0];
 
-const mapStyles = [
-    { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-    { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-    { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-    {
-        featureType: "administrative.locality",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-    },
-    {
-        featureType: "poi",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-    },
-    {
-        featureType: "poi.park",
-        elementType: "geometry",
-        stylers: [{ color: "#263c3f" }],
-    },
-    {
-        featureType: "poi.park",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#6b9a76" }],
-    },
-    {
-        featureType: "road",
-        elementType: "geometry",
-        stylers: [{ color: "#38414e" }],
-    },
-    {
-        featureType: "road",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#212a37" }],
-    },
-    {
-        featureType: "road",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#9ca5b3" }],
-    },
-    {
-        featureType: "road.highway",
-        elementType: "geometry",
-        stylers: [{ color: "#746855" }],
-    },
-    {
-        featureType: "road.highway",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#1f2835" }],
-    },
-    {
-        featureType: "road.highway",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#f3d19c" }],
-    },
-    {
-        featureType: "transit",
-        elementType: "geometry",
-        stylers: [{ color: "#2f3948" }],
-    },
-    {
-        featureType: "transit.station",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-    },
-    {
-        featureType: "water",
-        elementType: "geometry",
-        stylers: [{ color: "#17263c" }],
-    },
-    {
-        featureType: "water",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#515c6d" }],
-    },
-    {
-        featureType: "water",
-        elementType: "labels.text.stroke",
-        stylers: [{ color: "#17263c" }],
-    },
-];
-
-const mapContainerStyle = {
-  width: '100%',
-  height: '100%',
-};
-
 const mapandanCenter = {
   lat: 16.0203,
   lng: 120.4478
 };
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
 export default function MapPage() {
   const { visitedPois, addXp, addBalance, addBadge, addVisitedPoi } = useApp();
@@ -117,9 +34,10 @@ export default function MapPage() {
   const [isCheckInModalOpen, setCheckInModalOpen] = useState(false);
   const [isRewardsModalOpen, setRewardsModalOpen] = useState(false);
   const [rewardsGiven, setRewardsGiven] = useState(false);
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+  const [viewState, setViewState] = useState({
+    longitude: mapandanCenter.lng,
+    latitude: mapandanCenter.lat,
+    zoom: 17
   });
 
   const handlePinClick = (poi: POI) => {
@@ -154,67 +72,52 @@ export default function MapPage() {
   };
   
   const renderMap = () => {
-     if (loadError) {
-        return <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
-            <div className="max-w-md">
-                <h2 className="font-bold text-lg text-white">Map Loading Error</h2>
-                <p className="mt-2 text-sm">Could not load Google Maps. This is usually due to an API key issue. Please check the following:</p>
-                <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
-                    <li>Ensure `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set in your `.env` file.</li>
-                    <li>Verify the key is correct and the Maps JavaScript API is enabled in your Google Cloud project.</li>
-                    <li>Check your API key restrictions (e.g., HTTP referrers).</li>
-                </ul>
-            </div>
-        </div>;
-    }
-    
-    if (!isLoaded) {
-        return <div className="flex items-center justify-center h-full">Loading Map...</div>;
+    if (!MAPBOX_TOKEN) {
+      return (
+        <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
+          <div className="max-w-md">
+              <h2 className="font-bold text-lg text-white">Map Configuration Error</h2>
+              <p className="mt-2 text-sm">Could not load Mapbox. Please add your access token.</p>
+              <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
+                  <li>Create or open the `.env` file in the root of your project.</li>
+                  <li>Add the following line: `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN='your_token_here'`</li>
+                  <li>Replace `'your_token_here'` with your actual token from mapbox.com.</li>
+                  <li>Restart your development server to apply the changes.</li>
+              </ul>
+          </div>
+        </div>
+      );
     }
 
     return (
-        <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={mapandanCenter}
-            zoom={18}
-            options={{
-                styles: mapStyles,
-                disableDefaultUI: true,
-                zoomControl: true,
-            }}
-        >
-            <MarkerF
-                position={mapandanCenter}
-                icon={{
-                    path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z',
-                    fillColor: '#4285F4',
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 2,
-                    scale: 0.7,
-                    anchor: new google.maps.Point(12, 12),
-                }}
-            />
-            {pois.map((poi) => {
-                const isVisited = visitedPois.includes(poi.id);
-                return (
-                    <MarkerF
-                        key={poi.id}
-                        position={poi.pos}
-                        onClick={() => handlePinClick(poi)}
-                        icon={{
-                            path: isVisited ? 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' : 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-                            fillColor: isVisited ? '#50C878' : '#D2B48C',
-                            fillOpacity: 1,
-                            strokeWeight: 0,
-                            scale: 1.5,
-                            anchor: new google.maps.Point(12, 12),
-                        }}
-                    >
-                    </MarkerF>
-                );
-            })}
-        </GoogleMap>
+      <Map
+        {...viewState}
+        onMove={evt => setViewState(evt.viewState)}
+        style={{width: '100%', height: '100%'}}
+        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapboxAccessToken={MAPBOX_TOKEN}
+      >
+        <Marker longitude={mapandanCenter.lng} latitude={mapandanCenter.lat}>
+          <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white" />
+        </Marker>
+        {pois.map((poi) => {
+          const isVisited = visitedPois.includes(poi.id);
+          return (
+            <Marker
+              key={poi.id}
+              longitude={poi.pos.lng}
+              latitude={poi.pos.lat}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                handlePinClick(poi);
+              }}
+              style={{ cursor: isVisited ? 'default' : 'pointer' }}
+            >
+              <MapPinIcon className={`w-10 h-10 ${isVisited ? 'text-green-500' : 'text-yellow-600'}`} />
+            </Marker>
+          );
+        })}
+      </Map>
     );
   }
 
@@ -297,5 +200,3 @@ export default function MapPage() {
     </AppShell>
   );
 }
-
-    
