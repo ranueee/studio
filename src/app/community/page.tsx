@@ -65,7 +65,7 @@ export default function CommunityPage() {
 
     const albums: Album[] = Object.entries(albumsByName).map(([albumName, albumPosts]) => {
         const sortedPosts = albumPosts.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-        const coverPost = sortedPosts[0];
+        const coverPost = sortedPosts.find(p => p.image) || sortedPosts[0];
         return {
             albumId: albumName.toLowerCase().replace(/\s+/g, '-'),
             albumName: albumName,
@@ -345,5 +345,3 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
-
-    
