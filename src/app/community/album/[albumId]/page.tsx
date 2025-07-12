@@ -238,8 +238,7 @@ export default function AlbumDetailPage() {
                                 )}
                                 {post.video && (
                                      <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
-                                        <Video className="w-12 h-12 mr-4"/> 
-                                        Video playback not implemented.
+                                        <video src={post.video} controls className="w-full h-full" />
                                     </div>
                                 )}
                                 <p className="p-4 text-sm">{post.caption}</p>
@@ -343,5 +342,3 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
-
-    

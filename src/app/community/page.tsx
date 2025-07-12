@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 // Mock POIs for location tagging - this will now be used as a base and can grow
 let pois = [
@@ -59,7 +60,7 @@ let initialPosts = [
     },
     {
         id: 3,
-        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/600x400.png' },
+        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
         image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
@@ -117,6 +118,7 @@ export default function CommunityPage() {
     const [newPostLocation, setNewPostLocation] = useState('');
     const [newPostVisibility, setNewPostVisibility] = useState<'Public' | 'Private'>('Public');
     const [newPostMedia, setNewPostMedia] = useState<{type: 'image' | 'video', url: string} | null>(null);
+    const [mediaTypeToAdd, setMediaTypeToAdd] = useState<'image' | 'video' | null>(null);
     const [isPosting, setIsPosting] = useState(false);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -142,7 +144,7 @@ export default function CommunityPage() {
           imageHint: coverPost?.imageHint,
           postCount: locationPosts.length,
         };
-      });
+      }).filter(album => album.postCount > 0);
       
       setAlbums(createdAlbums.sort((a, b) => b.posts[0].timestamp.getTime() - a.posts[0].timestamp.getTime()));
       setLoading(false);
@@ -157,6 +159,7 @@ export default function CommunityPage() {
         setNewPostLocation('');
         setNewPostVisibility('Public');
         setNewPostMedia(null);
+        setMediaTypeToAdd(null);
         setIsPosting(false);
         setCreateModalOpen(false);
     };
@@ -168,6 +171,22 @@ export default function CommunityPage() {
         }
 
         setIsPosting(true);
+        
+        let generatedImageUrl: string | undefined = undefined;
+        let imageHint: string | undefined = undefined;
+
+        if (mediaTypeToAdd === 'image') {
+            try {
+                const result = await generateImage({ prompt: newPostContent });
+                generatedImageUrl = result.imageUrl;
+                imageHint = newPostContent.substring(0, 50);
+            } catch (error) {
+                console.error("Image generation failed", error);
+                toast({ variant: 'destructive', title: 'Image Generation Failed', description: 'Could not generate image. Please try again.' });
+                setIsPosting(false);
+                return;
+            }
+        }
         
         const locationSlug = newPostLocation.trim().toLowerCase().replace(/\s+/g, '-');
         if (!pois.some(p => p.id === locationSlug)) {
@@ -181,8 +200,8 @@ export default function CommunityPage() {
             locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
-            ...(newPostMedia?.type === 'image' && { image: newPostMedia.url, imageHint: 'community post' }),
-            ...(newPostMedia?.type === 'video' && { video: newPostMedia.url }),
+            ...(mediaTypeToAdd === 'image' && { image: generatedImageUrl, imageHint: imageHint }),
+            ...(mediaTypeToAdd === 'video' && { video: 'placeholder_video_url' }),
         };
 
         initialPosts.unshift(newPost);
@@ -202,15 +221,10 @@ export default function CommunityPage() {
     };
 
     const handleAddMedia = (type: 'image' | 'video') => {
-        if (type === 'image') {
-            // In a real app, this would open a file picker.
-            setNewPostMedia({ type: 'image', url: 'https://placehold.co/600x400.png' });
-            toast({ title: 'Image Added', description: 'A placeholder image has been added.' });
-        }
-        if (type === 'video') {
-             // In a real app, this would open a file picker.
-            setNewPostMedia({ type: 'video', url: 'placeholder_video_url' });
-            toast({ title: 'Video Added', description: 'A placeholder video has been added.' });
+        if (mediaTypeToAdd === type) {
+            setMediaTypeToAdd(null);
+        } else {
+            setMediaTypeToAdd(type);
         }
     };
 
@@ -301,7 +315,7 @@ export default function CommunityPage() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <Textarea 
-                            placeholder="What's on your mind?" 
+                            placeholder="What's on your mind? The AI will generate an image from this text if you add an image." 
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
                             className="min-h-[100px]"
@@ -326,30 +340,19 @@ export default function CommunityPage() {
                             </SelectContent>
                         </Select>
                         
-                        {newPostMedia && (
-                            <div className="relative w-full aspect-video rounded-md overflow-hidden">
-                                {newPostMedia.type === 'image' ? (
-                                    <Image src={newPostMedia.url} alt="media preview" fill className="object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-black flex items-center justify-center text-white">
-                                        <Video className="w-12 h-12"/>
-                                    </div>
-                                )}
-                                <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setNewPostMedia(null)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-
                         <div className="flex items-center gap-4 text-muted-foreground">
                             <span>Add to your post:</span>
-                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('image')}><ImagePlus className="text-primary"/></Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('video')}><Video className="text-primary"/></Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('image')} className={mediaTypeToAdd === 'image' ? 'bg-accent' : ''}>
+                                <ImagePlus className="text-primary"/>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('video')} className={mediaTypeToAdd === 'video' ? 'bg-accent' : ''}>
+                                <Video className="text-primary"/>
+                            </Button>
                         </div>
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="ghost">Cancel</Button>
+                            <Button variant="ghost" onClick={resetCreateModal}>Cancel</Button>
                         </DialogClose>
                         <Button onClick={handleCreatePost} disabled={isPosting}>
                             {isPosting ? 'Posting...' : 'Post'}
@@ -360,5 +363,3 @@ export default function CommunityPage() {
         </AppShell>
     );
 }
-
-    
