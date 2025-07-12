@@ -9,7 +9,9 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 let initialPosts: any[] = [
     {
@@ -94,6 +96,7 @@ export default function MyAlbumsPage() {
     const [albums, setAlbums] = useState<Album[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { toast } = useToast();
 
     const processPostsIntoAlbums = () => {
       setLoading(true);
@@ -127,6 +130,17 @@ export default function MyAlbumsPage() {
     useEffect(() => {
         processPostsIntoAlbums();
     }, []);
+    
+    const handleDeleteAlbum = (albumNameToDelete: string) => {
+        // Simulate deleting from the "database"
+        initialPosts = initialPosts.filter(p => p.albumName !== albumNameToDelete);
+        // Update the state to re-render
+        processPostsIntoAlbums();
+        toast({
+            title: "Album Deleted",
+            description: `The album "${albumNameToDelete}" and all its posts have been removed.`,
+        });
+    };
 
     return (
         <AppShell>
@@ -140,10 +154,10 @@ export default function MyAlbumsPage() {
                 
                 <div className="grid grid-cols-2 gap-4">
                     {(loading ? Array.from({ length: 2 }) : albums).map((album: Album | undefined, index) => (
-                        <Link href={album ? `/community/album/${album.albumId}` : '#'} key={album?.albumId ?? index}>
-                            <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
-                            {album ? (
-                                <>
+                        <Card key={album?.albumId ?? index} className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col group relative">
+                        {album ? (
+                            <>
+                                <Link href={`/community/album/${album.albumId}`} className="contents">
                                     <CardHeader className="p-0 relative h-32">
                                         <Image
                                             src={album.coverImage}
@@ -159,16 +173,40 @@ export default function MyAlbumsPage() {
                                         <h2 className="font-bold text-md truncate">{album.albumName}</h2>
                                         <p className="text-sm text-muted-foreground">{album.postCount} {album.postCount > 1 ? 'items' : 'item'}</p>
                                     </div>
-                                </>
-                            ) : (
-                                <div className="p-4 space-y-2">
-                                    <Skeleton className="h-32 w-full" />
-                                    <Skeleton className="h-5 w-4/5" />
-                                    <Skeleton className="h-4 w-1/2" />
-                                </div>
-                            )}
-                            </Card>
-                        </Link>
+                                </Link>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button 
+                                            variant="destructive" 
+                                            size="icon" 
+                                            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete the album "{album.albumName}" and all of its photos. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteAlbum(album!.albumName)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </>
+                        ) : (
+                            <div className="p-4 space-y-2">
+                                <Skeleton className="h-32 w-full" />
+                                <Skeleton className="h-5 w-4/5" />
+                                <Skeleton className="h-4 w-1/2" />
+                            </div>
+                        )}
+                        </Card>
                     ))}
                 </div>
                  {!loading && albums.length === 0 && (
@@ -184,5 +222,3 @@ export default function MyAlbumsPage() {
         </AppShell>
     );
 }
-
-    
