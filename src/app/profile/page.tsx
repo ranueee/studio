@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
@@ -9,10 +11,14 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Send, WalletCards } from 'lucide-react';
+import { Award, Send, Wallet, WalletCards } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
   const { level, xp, balance, unlockedBadges, visitedPois } = useApp();
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const xpForNextLevel = 100;
   const currentXp = xp % xpForNextLevel;
 
@@ -22,6 +28,39 @@ export default function ProfilePage() {
     { id: 'Mountain Mover', name: 'Mountain Mover', unlocked: false },
     { id: 'River Guardian', name: 'River Guardian', unlocked: false },
   ];
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && Array.isArray(accounts)) {
+            const account = accounts[0];
+            setWalletAddress(account);
+            toast({
+                title: "Wallet Connected",
+                description: "Your MetaMask wallet has been successfully connected.",
+            });
+        }
+      } catch (error) {
+        console.error("User rejected the request.");
+        toast({
+            variant: "destructive",
+            title: "Connection Failed",
+            description: "You rejected the wallet connection request.",
+        });
+      }
+    } else {
+       toast({
+        variant: "destructive",
+        title: "MetaMask Not Found",
+        description: "Please install the MetaMask extension to connect your wallet.",
+      });
+    }
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  }
 
   return (
     <AppShell>
@@ -50,18 +89,34 @@ export default function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
-              <div className="flex items-center gap-2">
-                <TokenIcon className="w-8 h-8"/>
-                <span className="text-3xl font-bold">{balance.toFixed(2)}</span>
-                <span className="text-lg font-semibold text-muted-foreground">$ECLB</span>
-              </div>
-              <VictionLogo className="h-6" />
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <Button variant="outline"><Send className="mr-2 h-4 w-4"/> Send</Button>
-              <Button variant="outline"><WalletCards className="mr-2 h-4 w-4"/> Receive</Button>
-            </div>
+            {walletAddress ? (
+                <div className='space-y-4'>
+                    <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                        <div>
+                            <p className="text-xs text-muted-foreground">Connected Address</p>
+                            <p className="font-mono text-sm font-bold">{formatAddress(walletAddress)}</p>
+                        </div>
+                        <VictionLogo className="h-6" />
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                        <div className="flex items-center gap-2">
+                            <TokenIcon className="w-8 h-8"/>
+                            <span className="text-3xl font-bold">{balance.toFixed(2)}</span>
+                            <span className="text-lg font-semibold text-muted-foreground">$ECLB</span>
+                        </div>
+                    </div>
+                    <Button variant="outline" className="w-full" onClick={() => setWalletAddress(null)}>Disconnect Wallet</Button>
+                </div>
+
+            ) : (
+                <div className="flex flex-col items-center justify-center text-center p-4 space-y-4">
+                    <Wallet className="w-12 h-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">Connect your wallet to see your balance and manage your assets.</p>
+                    <Button onClick={connectWallet} className="w-full">
+                        Connect MetaMask
+                    </Button>
+                </div>
+            )}
           </CardContent>
         </Card>
 
