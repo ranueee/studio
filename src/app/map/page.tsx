@@ -125,11 +125,6 @@ export default function MapPage() {
     <AppShell>
       <div className="relative w-full h-full bg-gray-900">
         {renderMap()}
-        
-        {/* Fog of War Effect */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-            background: 'radial-gradient(circle at center, transparent 0%, transparent 30%, rgba(0,0,0,0.7) 45%, rgba(0,0,0,0.85) 60%)'
-        }}></div>
       </div>
 
       {/* Location Details Bottom Sheet */}
@@ -167,8 +162,9 @@ export default function MapPage() {
         <DialogContent className="max-w-sm text-center p-8">
             <DialogHeader>
                 <DialogTitle className="text-2xl font-bold mt-6 text-center w-full">Welcome to {selectedPoi?.name}!</DialogTitle>
+                <DialogDescription>You've discovered a new point of interest!</DialogDescription>
             </DialogHeader>
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center py-4">
                 <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center">
                     <Check className="w-16 h-16 text-primary-foreground"/>
                 </div>
@@ -184,6 +180,7 @@ export default function MapPage() {
         <DialogContent className="max-w-sm text-center p-8">
             <DialogHeader>
                 <DialogTitle className="text-2xl font-bold">Rewards Claimed!</DialogTitle>
+                <DialogDescription>Congratulations on your find!</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 my-8 animate-in fade-in duration-500">
                 <div className="bg-secondary p-4 rounded-lg text-lg font-semibold flex items-center justify-center gap-2">
