@@ -15,28 +15,42 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2, Ticket } from 'lucide-react';
+import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2, Ticket, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from '@/components/qr-code';
 
 
-// NOTE: This is your actual deployed $ECLB token contract address
-const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603';
+const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603'; // Your $ECLB token
 const VICTION_TESTNET_CHAIN_ID = '0x59'; // 89 in hex for Viction Testnet
 
-// Minimal ABI to get the token balance, decimals, and send tokens
+// A list of other tokens to check on Viction Testnet (example: Wrapped VIC)
+const TOKEN_CONTRACTS = [
+    { address: '0x2Eaa64627e191b79155a5b5074A54530403a3A2A', symbol: 'WVIC', name: 'Wrapped VIC', icon: VictionLogo },
+    { address: ECLB_TOKEN_CONTRACT_ADDRESS, symbol: '$ECLB', name: 'EcoLakbay Token', icon: TokenIcon }
+];
+
 const erc20Abi = [
     "function balanceOf(address owner) view returns (uint256)",
     "function decimals() view returns (uint8)",
+    "function symbol() view returns (string)",
+    "function name() view returns (string)",
     "function transfer(address to, uint amount) returns (bool)"
 ];
+
+type TokenBalance = {
+    symbol: string;
+    name: string;
+    balance: string;
+    icon: React.ComponentType<any>;
+};
 
 export default function ProfilePage() {
   const { level, xp, unlockedBadges, visitedPois } = useApp();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [tokenBalance, setTokenBalance] = useState<string>('0.00');
+  const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSendModalOpen, setSendModalOpen] = useState(false);
   const [isReceiveModalOpen, setReceiveModalOpen] = useState(false);
@@ -55,40 +69,48 @@ export default function ProfilePage() {
     { id: 'River Guardian', name: 'River Guardian', unlocked: false },
   ];
 
-  const fetchBalance = async () => {
-      if (!walletAddress) return;
+  const fetchAllBalances = async (provider: ethers.BrowserProvider, address: string) => {
+      setIsRefreshing(true);
       try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, provider);
-          const balance = await tokenContract.balanceOf(walletAddress);
-          const decimals = await tokenContract.decimals();
-          const formattedBalance = ethers.formatUnits(balance, decimals);
-          setTokenBalance(parseFloat(formattedBalance).toFixed(2));
+          const nativeBalance = await provider.getBalance(address);
+          const nativeToken: TokenBalance = {
+              symbol: 'VIC',
+              name: 'Viction',
+              balance: parseFloat(ethers.formatEther(nativeBalance)).toFixed(4),
+              icon: VictionLogo
+          };
+
+          const tokenBalances = await Promise.all(
+              TOKEN_CONTRACTS.map(async (token) => {
+                  try {
+                      const contract = new ethers.Contract(token.address, erc20Abi, provider);
+                      const [balance, decimals] = await Promise.all([
+                          contract.balanceOf(address),
+                          contract.decimals()
+                      ]);
+                      return {
+                          ...token,
+                          balance: parseFloat(ethers.formatUnits(balance, decimals)).toFixed(2)
+                      };
+                  } catch (e) {
+                      console.warn(`Could not fetch balance for ${token.name}`, e);
+                      return { ...token, balance: '0.00' };
+                  }
+              })
+          );
+          
+          setBalances([nativeToken, ...tokenBalances]);
+
       } catch (e) {
-          console.error("Could not fetch balance", e);
-          setTokenBalance("Error");
+          console.error("Could not fetch balances", e);
           toast({
               variant: "destructive",
               title: "Balance Error",
-              description: "Could not fetch token balance. Make sure the contract is deployed on Viction Testnet.",
+              description: "Could not fetch token balances. Please refresh.",
           });
+      } finally {
+          setIsRefreshing(false);
       }
-  };
-
-  useEffect(() => {
-    if (walletAddress) {
-      fetchBalance();
-    }
-  }, [walletAddress]);
-
-
-  const disconnectWallet = () => {
-    setWalletAddress(null);
-    setTokenBalance('0.00');
-    toast({
-        title: "Wallet Disconnected",
-        description: "Your wallet has been disconnected.",
-    });
   };
 
   const connectWallet = async () => {
@@ -136,6 +158,7 @@ export default function ProfilePage() {
       if (accounts && Array.isArray(accounts) && accounts.length > 0) {
         const account = accounts[0];
         setWalletAddress(account);
+        await fetchAllBalances(newProvider, account);
         toast({
             title: "Wallet Connected",
             description: "Your Viction wallet has been successfully connected.",
@@ -153,6 +176,22 @@ export default function ProfilePage() {
     }
   };
 
+  const disconnectWallet = () => {
+    setWalletAddress(null);
+    setBalances([]);
+    toast({
+        title: "Wallet Disconnected",
+        description: "Your wallet has been disconnected.",
+    });
+  };
+
+  const handleRefresh = async () => {
+      if (!walletAddress) return;
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await fetchAllBalances(provider, walletAddress);
+      toast({ title: 'Balances refreshed' });
+  };
+  
   const handleCopyAddress = () => {
     if (!walletAddress) return;
     navigator.clipboard.writeText(walletAddress);
@@ -186,12 +225,10 @@ export default function ProfilePage() {
         
         toast({
             title: "Transaction Sent",
-            description: "Your transaction is being processed.",
+            description: "Your $ECLB transaction is being processed.",
         });
 
-        // Don't wait for the transaction to be mined. Update UI optimistically.
-        // This avoids rate-limiting errors from tx.wait().
-        setTimeout(fetchBalance, 1000); // Refresh balance after a short delay
+        setTimeout(() => handleRefresh(), 3000); 
 
         setSendModalOpen(false);
         setRecipientAddress('');
@@ -217,7 +254,6 @@ export default function ProfilePage() {
   return (
     <AppShell>
       <div className="p-4 space-y-6">
-        {/* User Info */}
         <div className="flex flex-col items-center text-center space-y-2">
           <Image src="https://placehold.co/80x80.png" alt="User profile" width={80} height={80} className="rounded-full border-4 border-primary" data-ai-hint="profile picture"/>
           <h1 className="text-2xl font-bold">Eco-Explorer</h1>
@@ -238,30 +274,52 @@ export default function ProfilePage() {
 
         <Separator />
 
-        {/* Eco-Wallet */}
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <WalletCards className="w-6 h-6 text-primary" />
-              My Eco-Wallet
-            </CardTitle>
+            <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                    <WalletCards className="w-6 h-6 text-primary" />
+                    My Eco-Wallet
+                </CardTitle>
+                {walletAddress && (
+                     <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+                        <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+                    </Button>
+                )}
+            </div>
           </CardHeader>
           <CardContent>
             {walletAddress ? (
                 <div className='space-y-4'>
-                    <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
                         <div>
                             <p className="text-xs text-muted-foreground">Connected Address</p>
                             <p className="font-mono text-sm font-bold">{formatAddress(walletAddress)}</p>
                         </div>
                         <VictionLogo className="h-6" />
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <TokenIcon className="w-8 h-8"/>
-                            <span className="text-3xl font-bold">{tokenBalance}</span>
-                            <span className="text-lg font-semibold text-muted-foreground">$ECLB</span>
+
+                    <div className="space-y-2">
+                      <Label>Token Balances</Label>
+                      {isRefreshing && balances.length === 0 ? (
+                           <div className="text-center p-4">
+                                <Loader2 className="w-6 h-6 animate-spin mx-auto"/>
+                                <p className="text-sm text-muted-foreground mt-2">Fetching balances...</p>
+                           </div>
+                      ) : (
+                        <div className="border rounded-lg p-2 space-y-1">
+                            {balances.map(({ icon: Icon, name, symbol, balance}) => (
+                                <div key={symbol} className="flex items-center p-2 rounded-md hover:bg-secondary/50">
+                                    <Icon className="w-8 h-8 mr-3"/>
+                                    <div className="flex-1">
+                                        <p className="font-bold">{symbol}</p>
+                                        <p className="text-xs text-muted-foreground">{name}</p>
+                                    </div>
+                                    <p className="font-mono text-lg">{balance}</p>
+                                </div>
+                            ))}
                         </div>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -279,16 +337,15 @@ export default function ProfilePage() {
             ) : (
                 <div className="flex flex-col items-center justify-center text-center p-4 space-y-4">
                     <Wallet className="w-12 h-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">Connect your wallet to see your balance and manage your assets.</p>
+                    <p className="text-muted-foreground">Connect your wallet to manage your assets.</p>
                     <Button onClick={connectWallet} className="w-full" disabled={isConnecting}>
-                        {isConnecting ? 'Connecting...' : 'Connect MetaMask'}
+                        {isConnecting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Connecting...</> : 'Connect MetaMask'}
                     </Button>
                 </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Badges */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -310,7 +367,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
         
-        {/* My Journey */}
         <Card>
             <CardHeader>
                 <CardTitle>My Journey</CardTitle>
@@ -331,13 +387,12 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* Receive Modal */}
       <Dialog open={isReceiveModalOpen} onOpenChange={setReceiveModalOpen}>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Receive $ECLB</DialogTitle>
+                <DialogTitle>Receive Tokens</DialogTitle>
                 <DialogDescription>
-                    Show this QR code or share your address to receive tokens.
+                    Show this QR code or share your address to receive any token on the Viction network.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4 flex flex-col items-center">
@@ -357,13 +412,12 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
       
-      {/* Send Modal */}
       <Dialog open={isSendModalOpen} onOpenChange={setSendModalOpen}>
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>Send $ECLB</DialogTitle>
                 <DialogDescription>
-                    Enter the recipient's address and the amount to send. This action is irreversible.
+                    Enter the recipient's address and the amount of $ECLB to send. This action is irreversible.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
@@ -389,5 +443,3 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
-
-    
