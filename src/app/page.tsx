@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -38,18 +39,6 @@ export default function OnboardingPage() {
               <Link href="/map">
                 <GoogleIcon className="mr-2" />
                 Sign in with Google
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700 text-white">
-              <Link href="/map">
-                <Facebook className="mr-2" />
-                Sign in with Facebook
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full bg-black/50 border-white/50 backdrop-blur-sm hover:bg-white/20">
-              <Link href="/map">
-                <Mail className="mr-2" />
-                Sign in with Email
               </Link>
             </Button>
           </div>
