@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MapPin, ImagePlus, Video } from 'lucide-react';
+import { MapPin, ImagePlus, Video, Globe, Lock } from 'lucide-react';
 
 let initialPosts: any[] = [
     {
@@ -356,10 +356,11 @@ export default function CommunityPage() {
                         </div>
 
                         {newPostMedia && (
-                            <>
+                            <div className="space-y-4 p-4 border rounded-lg">
+                                <Label className="font-semibold">Album Options</Label>
                                 <Select value={selectedAlbum} onValueChange={setSelectedAlbum} disabled={createAlbumSwitch}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select an album (optional)" />
+                                        <SelectValue placeholder="Select an existing album" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {pois.filter(p => p.isAlbum).map(album => (
@@ -370,7 +371,7 @@ export default function CommunityPage() {
 
                                 <div className="flex items-center space-x-2">
                                     <Switch id="create-album-switch" checked={createAlbumSwitch} onCheckedChange={setCreateAlbumSwitch} />
-                                    <Label htmlFor="create-album-switch">Create a new album for this post</Label>
+                                    <Label htmlFor="create-album-switch">Or create a new album</Label>
                                 </div>
 
                                 {createAlbumSwitch && (
@@ -382,18 +383,31 @@ export default function CommunityPage() {
                                         />
                                     </div>
                                 )}
-                            </>
+                            </div>
                         )}
-                        
-                        <div className="flex items-center gap-4 text-muted-foreground">
-                            <span>Add to your post:</span>
-                             <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" style={{ display: 'none' }} />
-                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('image')}>
-                                <ImagePlus className="text-primary"/>
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleAddMedia('video')}>
-                                <Video className="text-primary"/>
-                            </Button>
+                         
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-muted-foreground">
+                                <span>Add to post:</span>
+                                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" style={{ display: 'none' }} />
+                                <Button variant="ghost" size="icon" onClick={() => handleAddMedia('image')}>
+                                    <ImagePlus className="text-primary"/>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleAddMedia('video')}>
+                                    <Video className="text-primary"/>
+                                </Button>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Switch 
+                                    id="visibility-switch" 
+                                    checked={newPostVisibility === 'Public'} 
+                                    onCheckedChange={(checked) => setNewPostVisibility(checked ? 'Public' : 'Private')} 
+                                />
+                                <Label htmlFor="visibility-switch" className="flex items-center gap-1.5">
+                                    {newPostVisibility === 'Public' ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                                    {newPostVisibility}
+                                </Label>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
