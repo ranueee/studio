@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { useApp } from '@/hooks/use-app';
 import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, History, Sprout, Utensils, Sailboat, Anchor } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
-import Map, { Marker } from 'react-map-gl';
+import Map, { Marker, type MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
 
@@ -73,22 +73,16 @@ const pois = [
 
 type POI = typeof pois[0];
 
-const mapandanCenter = {
+const pangasinanCenter = {
   lat: 16.0203,
   lng: 120.4478
 };
 
 const UserLocationMarker = () => (
-  <div className="relative">
-      <svg width="48" height="58" viewBox="0 0 48 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M24 58C24 58 48 38.6667 48 24C48 10.7452 37.2548 0 24 0C10.7452 0 0 10.7452 0 24C0 38.6667 24 58 24 58Z" fill="#FBBF24"/>
-          <circle cx="24" cy="24" r="16" fill="#34D399"/>
-          <path d="M24 16C26.2091 16 28 17.7909 28 20C28 22.2091 26.2091 24 24 24C21.7909 24 20 22.2091 20 20C20 17.7909 21.7909 16 24 16ZM24 26C30 26 30 30 30 30V32H18V30C18 30 18 26 24 26Z" fill="white"/>
-      </svg>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center w-32">
-          {/* Text can be added here if needed, but the prompt shows text outside the marker */}
-      </div>
-  </div>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="12" fill="#4285F4" fillOpacity="0.3"/>
+    <circle cx="12" cy="12" r="6" fill="#4285F4" stroke="white" strokeWidth="2"/>
+  </svg>
 );
 
 
@@ -101,26 +95,38 @@ export default function MapPage() {
   const [isRewardsModalOpen, setRewardsModalOpen] = useState(false);
   const [rewardsGiven, setRewardsGiven] = useState(false);
   const { toast } = useToast();
+  const mapRef = useRef<MapRef | null>(null);
 
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [viewState, setViewState] = useState({
-    longitude: mapandanCenter.lng,
-    latitude: mapandanCenter.lat,
+    longitude: pangasinanCenter.lng,
+    latitude: pangasinanCenter.lat,
     zoom: 9
   });
 
   useEffect(() => {
+    let watchId: number;
+
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
+          const newLocation = { lat: latitude, lng: longitude };
+
+          setUserLocation(newLocation);
+          
           setViewState(prev => ({
             ...prev,
             latitude,
             longitude,
-            zoom: 12 // Zoom in to the user's location
+            zoom: 15 
           }));
+
+          mapRef.current?.flyTo({
+            center: [longitude, latitude],
+            zoom: 15,
+            duration: 1000
+          });
         },
         (error) => {
           console.error("Error getting user location:", error);
@@ -129,9 +135,20 @@ export default function MapPage() {
             title: "Location Error",
             description: "Could not get your location. Please ensure location services are enabled.",
           });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
         }
       );
     }
+
+    return () => {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, [toast]);
 
 
@@ -186,6 +203,7 @@ export default function MapPage() {
 
     return (
       <Map
+        ref={mapRef}
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
         style={{width: '100%', height: '100%'}}
