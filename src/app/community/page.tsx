@@ -1,35 +1,26 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MapPin, ImagePlus, Video, Globe, Lock, Send, Heart, MessageCircle, Share2, Copy, MoreVertical, Edit, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MapPin, ImagePlus, Video } from 'lucide-react';
 
-// In a real app, this data would be fetched from a database
-let pois = [
-  { id: 'hundred-islands', name: 'Hundred Islands', isAlbum: true },
-  { id: 'patar-beach', name: 'Patar Beach', isAlbum: true },
-  { id: 'enchanted-cave', name: 'Enchanted Cave', isAlbum: true },
-  { id: 'bolinao-falls', name: 'Bolinao Falls', isAlbum: false },
-  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', isAlbum: true },
-];
-
-let initialPosts: Post[] = [
+let initialPosts: any[] = [
     {
         id: 1,
         user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
@@ -37,10 +28,9 @@ let initialPosts: Post[] = [
         imageHint: 'philippines beach sunset',
         caption: 'Sunsets in Pangasinan are unreal!',
         locationId: 'patar-beach',
+        albumName: 'Patar Beach Adventures',
         visibility: 'Public',
         timestamp: new Date('2023-10-26T18:25:43.511Z'),
-        likes: 12,
-        comments: [],
     },
     {
         id: 2,
@@ -49,10 +39,9 @@ let initialPosts: Post[] = [
         imageHint: 'philippines islands boat',
         caption: 'Island hopping day was a success!',
         locationId: 'hundred-islands',
+        albumName: 'Hundred Islands Trip',
         visibility: 'Public',
         timestamp: new Date('2023-10-25T12:10:11.511Z'),
-        likes: 25,
-        comments: [],
     },
     {
         id: 3,
@@ -61,10 +50,9 @@ let initialPosts: Post[] = [
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
         locationId: 'enchanted-cave',
+        albumName: 'Bolinao Getaway',
         visibility: 'Private',
         timestamp: new Date('2023-10-24T09:30:00.511Z'),
-        likes: 5,
-        comments: [],
     },
     {
         id: 4,
@@ -73,22 +61,31 @@ let initialPosts: Post[] = [
         imageHint: 'philippines lighthouse coast',
         caption: 'The view from the top is worth the climb!',
         locationId: 'cape-bolinao',
+        albumName: 'Bolinao Getaway',
         visibility: 'Public',
         timestamp: new Date('2023-10-23T15:00:21.511Z'),
-        likes: 18,
-        comments: [],
     },
-    {
+     {
         id: 5,
-        user: { name: 'Storyteller Sam', avatar: 'https://placehold.co/40x40.png' },
-        caption: "Just reflecting on my recent trip to Pangasinan. The people are so welcoming, and the landscapes are breathtaking. It's more than just a destination; it's a feeling. Can't wait to go back and explore more hidden gems. #EcoLakbay #Pangasinan",
-        locationId: 'pangasinan-general',
+        user: { name: 'Wanderlust Ana', avatar: 'https://placehold.co/40x40.png' },
+        image: 'https://placehold.co/600x400.png',
+        imageHint: 'philippines white sand beach',
+        caption: 'Another beautiful day at the beach.',
+        locationId: 'patar-beach',
+        albumName: 'Patar Beach Adventures',
         visibility: 'Public',
-        timestamp: new Date('2023-10-22T10:00:00.511Z'),
-        likes: 30,
-        comments: [],
+        timestamp: new Date('2023-10-27T11:45:00.511Z'),
     },
 ];
+
+let pois = [
+  { id: 'hundred-islands', name: 'Hundred Islands', isAlbum: true },
+  { id: 'patar-beach', name: 'Patar Beach', isAlbum: true },
+  { id: 'enchanted-cave', name: 'Enchanted Cave', isAlbum: true },
+  { id: 'bolinao-falls', name: 'Bolinao Falls', isAlbum: false },
+  { id: 'cape-bolinao', name: 'Cape Bolinao Lighthouse', isAlbum: true },
+];
+
 
 type Post = {
   id: number;
@@ -101,50 +98,78 @@ type Post = {
   albumName?: string;
   visibility: 'Public' | 'Private';
   timestamp: Date;
-  likes: number;
-  comments: any[]; // Simplified for now
 };
 
-
-const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
-const XIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
-const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
-const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>;
-
+type Album = {
+    albumId: string;
+    albumName: string;
+    coverImage: string;
+    coverImageHint: string;
+    postCount: number;
+};
 
 export default function CommunityPage() {
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [albums, setAlbums] = useState<Album[]>([]);
+    const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+    const router = useRouter();
+    const { toast } = useToast();
+
+    // Create Post State
     const [newPostContent, setNewPostContent] = useState('');
     const [newPostLocation, setNewPostLocation] = useState('');
     const [newPostVisibility, setNewPostVisibility] = useState<'Public' | 'Private'>('Public');
     const [newPostMedia, setNewPostMedia] = useState<{type: 'image' | 'video', url: string, file: File} | null>(null);
     const [mediaTypeToAdd, setMediaTypeToAdd] = useState<'image' | 'video' | 'text' | null>(null);
     const [isPosting, setIsPosting] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [createAlbumSwitch, setCreateAlbumSwitch] = useState(false);
     const [newAlbumName, setNewAlbumName] = useState('');
     const [selectedAlbum, setSelectedAlbum] = useState<string>('');
-    
-    const [isShareModalOpen, setShareModalOpen] = useState(false);
-    const [isEditModalOpen, setEditModalOpen] = useState(false);
-    const [editingPost, setEditingPost] = useState<Post | null>(null);
-    const [editedCaption, setEditedCaption] = useState('');
-    
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-    
-    const fetchPosts = () => {
-        setLoading(true);
-        // Sort posts by most recent
-        const sortedPosts = [...initialPosts].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-        setPosts(sortedPosts);
-        setLoading(false);
-    }
-    
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const processPostsIntoAlbums = () => {
+      setLoading(true);
+      const albumsByName: { [key: string]: Post[] } = {};
+      
+      initialPosts.forEach(post => {
+          if (post.albumName) {
+              if (!albumsByName[post.albumName]) {
+                  albumsByName[post.albumName] = [];
+              }
+              albumsByName[post.albumName].push(post);
+          }
+      });
+      
+      const createdAlbums = Object.entries(albumsByName).map(([albumName, posts]) => {
+          const sortedPosts = posts.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+          const coverPost = sortedPosts[0];
+          return {
+              albumId: albumName.toLowerCase().replace(/\s+/g, '-'),
+              albumName: albumName,
+              coverImage: coverPost.image || 'https://placehold.co/600x400.png',
+              coverImageHint: coverPost.imageHint || 'community album cover',
+              postCount: posts.length,
+          };
+      });
+
+      setAlbums(createdAlbums.sort((a, b) => a.albumName.localeCompare(b.albumName)));
+      setLoading(false);
+    };
+
     useEffect(() => {
-        fetchPosts();
+        processPostsIntoAlbums();
     }, []);
+    
+    const handleDeleteAlbum = (albumNameToDelete: string) => {
+        // Simulate deleting from the "database"
+        initialPosts = initialPosts.filter(p => p.albumName !== albumNameToDelete);
+        // Update the state to re-render
+        processPostsIntoAlbums();
+        toast({
+            title: "Album Deleted",
+            description: `The album "${albumNameToDelete}" and all its posts have been removed.`,
+        });
+    };
 
     const resetCreateModal = () => {
         setNewPostContent('');
@@ -183,9 +208,9 @@ export default function CommunityPage() {
             locationId: locationSlug,
             visibility: newPostVisibility,
             timestamp: new Date(),
+            ...mediaData,
             likes: 0,
             comments: [],
-            ...mediaData
         };
 
         if (newPostMedia) {
@@ -198,7 +223,7 @@ export default function CommunityPage() {
         }
         
         initialPosts.unshift(newPost);
-        fetchPosts();
+        processPostsIntoAlbums();
         
         resetCreateModal();
         toast({ title: 'Post Created!', description: 'Your adventure has been shared.' });
@@ -219,154 +244,83 @@ export default function CommunityPage() {
         fileInputRef.current?.click();
     };
 
-    const handleShare = (platform: string) => {
-        setShareModalOpen(false);
-        let message = '';
-        if (platform === 'Copy Link') {
-            navigator.clipboard.writeText(window.location.href);
-            message = 'Link copied to clipboard!';
-        } else {
-            message = `Shared to ${platform}! (simulation)`;
-        }
-        toast({
-            title: "Shared Successfully!",
-            description: message,
-        });
-    };
-
-    const handleDeletePost = (postId: number) => {
-        initialPosts = initialPosts.filter(p => p.id !== postId);
-        fetchPosts();
-        toast({
-            title: "Post Deleted",
-            description: "The post has been removed.",
-        });
-    };
-
-    const openEditModal = (post: Post) => {
-        setEditingPost(post);
-        setEditedCaption(post.caption);
-        setEditModalOpen(true);
-    };
-
-    const handleEditPost = () => {
-        if (!editingPost) return;
-        const postIndex = initialPosts.findIndex(p => p.id === editingPost.id);
-        if (postIndex > -1) {
-            initialPosts[postIndex].caption = editedCaption;
-        }
-        fetchPosts();
-        setEditModalOpen(false);
-        setEditingPost(null);
-        setEditedCaption('');
-        toast({
-            title: "Post Updated",
-            description: "Your post caption has been updated.",
-        });
-    };
-
-    const getLocationName = (locationId: string) => {
-        const poi = pois.find(p => p.id === locationId);
-        return poi ? poi.name : locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-
     return (
         <AppShell>
             <div className="p-4 space-y-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold">Community Feed</h1>
+                    <h1 className="text-3xl font-bold">My Albums</h1>
                     <Button onClick={() => setCreateModalOpen(true)}>
                         <PlusCircle className="mr-2" />
                         Create Post
                     </Button>
                 </div>
                 
-                <div className="space-y-4">
-                    {(loading ? Array.from({ length: 3 }) : posts).map((post: Post | undefined, index) => (
-                        <Card key={post?.id ?? index} className="overflow-hidden">
-                        {post ? (
+                <div className="grid grid-cols-2 gap-4">
+                    {(loading ? Array.from({ length: 2 }) : albums).map((album: Album | undefined, index) => (
+                        <Card key={album?.albumId ?? index} className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col group relative">
+                        {album ? (
                             <>
-                            <CardHeader className="flex flex-row items-center gap-3 p-4">
-                                <Avatar>
-                                    <AvatarImage src={post.user.avatar} alt={post.user.name} />
-                                    <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <p className="font-semibold">{post.user.name}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      <span>{getLocationName(post.locationId)}</span>
-                                      <span className="mx-1">&middot;</span>
-                                      <span>{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(post.timestamp)}</span>
-                                    </p>
-                                </div>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <MoreVertical className="w-4 h-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => openEditModal(post)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            <span>Edit</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            <span>Delete</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {post.image && (
-                                    <Image src={post.image} alt={post.caption} width={600} height={400} className="w-full h-auto object-cover" data-ai-hint={post.imageHint || "community post image"}/>
-                                )}
-                                {post.video && (
-                                     <div className="w-full aspect-video bg-black flex items-center justify-center text-white">
-                                        <video src={post.video} controls className="w-full h-full" />
+                                <Link href={`/community/album/${album.albumId}`} className="contents">
+                                    <CardHeader className="p-0 relative h-32">
+                                        <Image
+                                            src={album.coverImage}
+                                            alt={album.albumName}
+                                            width={300}
+                                            height={300}
+                                            className="w-full h-full object-cover"
+                                            data-ai-hint={album.coverImageHint}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                                    </CardHeader>
+                                    <div className="p-3 flex-1">
+                                        <h2 className="font-bold text-md truncate">{album.albumName}</h2>
+                                        <p className="text-sm text-muted-foreground">{album.postCount} {album.postCount > 1 ? 'items' : 'item'}</p>
                                     </div>
-                                )}
-                                <p className="p-4 text-sm">{post.caption}</p>
-                            </CardContent>
-                            <CardFooter className="p-2 border-t">
-                                <div className="flex w-full justify-around">
-                                    <Button variant="ghost" className="flex-1">
-                                        <Heart className="mr-2" /> {post.likes}
-                                    </Button>
-                                    <Button variant="ghost" className="flex-1">
-                                        <MessageCircle className="mr-2" /> Comment
-                                    </Button>
-                                    <Button variant="ghost" className="flex-1" onClick={() => setShareModalOpen(true)}>
-                                        <Share2 className="mr-2" /> Share
-                                    </Button>
-                                </div>
-                            </CardFooter>
+                                </Link>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button 
+                                            variant="destructive" 
+                                            size="icon" 
+                                            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete the album "{album.albumName}" and all of its photos. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteAlbum(album!.albumName)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </>
                         ) : (
-                           <div className="p-4 space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <Skeleton className="h-10 w-10 rounded-full" />
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-[150px]" />
-                                        <Skeleton className="h-4 w-[100px]" />
-                                    </div>
-                                </div>
-                                <Skeleton className="h-[250px] w-full rounded-lg" />
-                                <Skeleton className="h-4 w-full" />
+                            <div className="p-4 space-y-2">
+                                <Skeleton className="h-32 w-full" />
+                                <Skeleton className="h-5 w-4/5" />
+                                <Skeleton className="h-4 w-1/2" />
                             </div>
                         )}
                         </Card>
                     ))}
-                     {!loading && posts.length === 0 && (
-                        <div className="text-center text-muted-foreground py-16">
-                            <h3 className="text-lg font-semibold">Start your journey!</h3>
-                            <p className="mt-2">The feed is quiet. Be the first to share an adventure!</p>
-                            <Button variant="default" className="mt-4" onClick={() => setCreateModalOpen(true)}>
-                                Create Post
-                            </Button>
-                        </div>
-                    )}
                 </div>
+                 {!loading && albums.length === 0 && (
+                    <div className="text-center text-muted-foreground py-16 col-span-2">
+                        <h3 className="text-lg font-semibold">You haven't started any journey yet.</h3>
+                        <p className="mt-2">Create albums to organize your adventures.</p>
+                        <Button variant="default" className="mt-4" onClick={() => setCreateModalOpen(true)}>
+                           <PlusCircle className="mr-2"/> Start a Journey
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <Dialog open={isCreateModalOpen} onOpenChange={(isOpen) => !isOpen && resetCreateModal()}>
@@ -454,38 +408,6 @@ export default function CommunityPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            <Dialog open={isShareModalOpen} onOpenChange={setShareModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Share this Post</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid grid-cols-3 gap-4 pt-4">
-                         <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => handleShare('Facebook')}><FacebookIcon className="w-8 h-8"/><span>Facebook</span></Button>
-                        <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => handleShare('X')}><XIcon className="w-8 h-8"/><span>X</span></Button>
-                        <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => handleShare('Instagram')}><InstagramIcon className="w-8 h-8"/><span>Instagram</span></Button>
-                        <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => handleShare('WhatsApp')}><WhatsAppIcon className="w-8 h-8"/><span>WhatsApp</span></Button>
-                        <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => handleShare('Copy Link')}><Copy className="w-8 h-8"/><span>Copy Link</span></Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Post</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Textarea value={editedCaption} onChange={(e) => setEditedCaption(e.target.value)} className="min-h-[120px]" />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setEditModalOpen(false)}>Cancel</Button>
-                        <Button onClick={handleEditPost}>Save Changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </AppShell>
     );
 }
-
-    

@@ -241,13 +241,6 @@ export default function ProfilePage() {
         </div>
 
         <Separator />
-        
-        <Link href="/profile/albums" passHref>
-            <Button variant="outline" className="w-full">
-                <BookImage className="mr-2 h-4 w-4" /> My Albums
-            </Button>
-        </Link>
-
 
         {/* Eco-Wallet */}
         <Card className="w-full">
@@ -400,7 +393,3 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
-
-    
-
-    
