@@ -52,7 +52,6 @@ export default function CommunityPage() {
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     
-    // Derive albums directly from posts state for automatic updates
     const albumsByName: { [key: string]: Post[] } = {};
     posts.forEach(post => {
         if (post.albumName) {
@@ -344,5 +343,4 @@ export default function CommunityPage() {
             </Dialog>
         </AppShell>
     );
-
-    
+}
