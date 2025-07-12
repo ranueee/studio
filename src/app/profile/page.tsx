@@ -173,11 +173,7 @@ export default function ProfilePage() {
       }
 
       setIsSending(true);
-      const { dismiss } = toast({
-          title: "Transaction Pending",
-          description: "Waiting for confirmation from MetaMask...",
-      });
-
+      
       try {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
@@ -188,26 +184,20 @@ export default function ProfilePage() {
 
         const tx = await tokenContract.transfer(recipientAddress, amountToSend);
         
-        dismiss();
         toast({
             title: "Transaction Sent",
-            description: "Your transaction is being processed. View on Vicscan.",
+            description: "Your transaction is being processed.",
         });
 
-        await tx.wait();
+        // Don't wait for the transaction to be mined. Update UI optimistically.
+        // This avoids rate-limiting errors from tx.wait().
+        setTimeout(fetchBalance, 1000); // Refresh balance after a short delay
 
-        toast({
-            title: "Transaction Confirmed!",
-            description: `Successfully sent ${sendAmount} $ECLB.`,
-        });
-
-        await fetchBalance();
         setSendModalOpen(false);
         setRecipientAddress('');
         setSendAmount('');
 
       } catch (error: any) {
-        dismiss();
         console.error("Transaction failed", error);
         toast({
             variant: 'destructive',
@@ -393,5 +383,3 @@ export default function ProfilePage() {
     </AppShell>
   );
 }
-
-    
