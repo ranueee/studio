@@ -2,7 +2,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useState, useCallback } from 'react';
+import { createContext, useState, useCallback, useEffect } from 'react';
+import type { Item } from '@/lib/marketplace-data';
 
 // Types
 export type Comment = {
@@ -26,6 +27,11 @@ export type Post = {
     comments: Comment[];
 };
 
+export type RedeemedVoucher = Item & {
+    redeemedAt: string;
+    voucherCode: string;
+};
+
 export interface AppState {
   xp: number;
   level: number;
@@ -33,12 +39,14 @@ export interface AppState {
   unlockedBadges: string[];
   visitedPois: string[];
   posts: Post[];
+  redeemedVouchers: RedeemedVoucher[];
 }
 
 export interface AppContextType extends AppState {
   addXp: (amount: number) => void;
   addBalance: (amount: number) => void;
-  redeemItem: (cost: number) => boolean;
+  redeemItemForVoucher: (item: Item) => boolean;
+  useVoucher: (voucherCode: string) => void;
   addBadge: (badge: string) => void;
   addVisitedPoi: (poi: string) => void;
   addPost: (post: Post) => void;
@@ -118,17 +126,46 @@ const initialPosts: Post[] = [
     },
 ];
 
+function generateVoucherCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [state, setState] = useState<AppState>({
-    xp: 20,
-    level: 1,
-    balance: 0,
-    unlockedBadges: [],
-    visitedPois: [],
-    posts: initialPosts,
+  const [state, setState] = useState<AppState>(() => {
+    // Lazy initialization of state
+    let savedState: AppState | null = null;
+    if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('appState');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                // Make sure to re-hydrate Date objects
+                parsed.posts = parsed.posts.map((p: any) => ({...p, timestamp: new Date(p.timestamp)}));
+                savedState = parsed;
+            } catch (e) {
+                console.error("Failed to parse saved state", e);
+            }
+        }
+    }
+    return savedState || {
+        xp: 20,
+        level: 1,
+        balance: 50,
+        unlockedBadges: [],
+        visitedPois: [],
+        posts: initialPosts,
+        redeemedVouchers: [],
+    };
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('appState', JSON.stringify(state));
+    }
+  }, [state]);
 
   const addXp = useCallback((amount: number) => {
     setState(prevState => {
@@ -142,13 +179,29 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     setState(prevState => ({ ...prevState, balance: prevState.balance + amount }));
   }, []);
 
-  const redeemItem = useCallback((cost: number) => {
-    if (state.balance >= cost) {
-      setState(prevState => ({ ...prevState, balance: prevState.balance - cost }));
+  const redeemItemForVoucher = useCallback((item: Item) => {
+    if (state.balance >= item.price) {
+        const newVoucher: RedeemedVoucher = {
+            ...item,
+            redeemedAt: new Date().toISOString(),
+            voucherCode: generateVoucherCode(),
+        };
+      setState(prevState => ({ 
+          ...prevState, 
+          balance: prevState.balance - item.price,
+          redeemedVouchers: [...prevState.redeemedVouchers, newVoucher],
+        }));
       return true;
     }
     return false;
   }, [state.balance]);
+
+  const useVoucher = useCallback((voucherCode: string) => {
+      setState(prevState => ({
+          ...prevState,
+          redeemedVouchers: prevState.redeemedVouchers.filter(v => v.voucherCode !== voucherCode)
+      }));
+  }, []);
 
   const addBadge = useCallback((badge: string) => {
     setState(prevState => {
@@ -202,7 +255,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AppContext.Provider value={{ ...state, addXp, addBalance, redeemItem, addBadge, addVisitedPoi, addPost, deletePost, editPost, addCommentToPost }}>
+    <AppContext.Provider value={{ ...state, addXp, addBalance, redeemItemForVoucher, useVoucher, addBadge, addVisitedPoi, addPost, deletePost, editPost, addCommentToPost }}>
       {children}
     </AppContext.Provider>
   );

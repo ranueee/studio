@@ -1,5 +1,15 @@
 
-export const items = [
+
+export type Item = {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  hint: string;
+  description: string;
+};
+
+export const items: Item[] = [
   {
     id: 'mango-jam',
     title: 'Sundowners Mango Jam',

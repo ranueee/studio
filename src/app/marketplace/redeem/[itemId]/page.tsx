@@ -11,22 +11,15 @@ import { TokenIcon } from '@/components/icons/token-icon';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Item } from '@/lib/marketplace-data';
 
-type Item = {
-  id: string;
-  title: string;
-  price: number;
-  image: string;
-  hint: string;
-  description: string;
-};
 
 export default function RedemptionPage() {
   const router = useRouter();
   const params = useParams();
   const itemId = params.itemId as string;
 
-  const { balance, redeemItem } = useApp();
+  const { balance, redeemItemForVoucher } = useApp();
   const { toast } = useToast();
   
   const [item, setItem] = useState<Item | null>(null);
@@ -64,13 +57,13 @@ export default function RedemptionPage() {
   const handleRedeem = () => {
     if (!item) return;
 
-    const success = redeemItem(item.price);
+    const success = redeemItemForVoucher(item);
     if (success) {
       toast({
         title: "Success!",
-        description: `You've redeemed ${item.title}.`,
+        description: `${item.title} has been added to your voucher pocket.`,
       });
-      router.push(`/marketplace/redeem/${item.id}/qr`);
+      router.push(`/profile/vouchers`);
     } else {
       toast({
         variant: "destructive",

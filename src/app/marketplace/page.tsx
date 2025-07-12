@@ -10,15 +10,9 @@ import { TokenIcon } from '@/components/icons/token-icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Ticket } from 'lucide-react';
+import { useApp } from '@/hooks/use-app';
+import type { Item } from '@/lib/marketplace-data';
 
-type Item = {
-  id: string;
-  title: string;
-  price: number;
-  image: string;
-  hint: string;
-  description: string;
-};
 
 async function fetchItems(): Promise<Item[]> {
     const res = await fetch('/api/marketplace/items');
@@ -31,6 +25,7 @@ async function fetchItems(): Promise<Item[]> {
 export default function MarketplacePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const { redeemedVouchers } = useApp();
 
   useEffect(() => {
     const loadItems = async () => {
@@ -48,7 +43,9 @@ export default function MarketplacePage() {
     loadItems();
   }, []);
 
-  const displayItems = loading ? Array.from({ length: 4 }).map((_, i) => ({ id: i })) : items;
+  const availableItems = items.filter(item => !redeemedVouchers.find(v => v.id === item.id));
+
+  const displayItems = loading ? Array.from({ length: 4 }).map((_, i) => ({ id: i })) : availableItems;
 
   return (
     <AppShell>
@@ -99,6 +96,12 @@ export default function MarketplacePage() {
             </div>
           ))}
         </div>
+         { !loading && availableItems.length === 0 && (
+            <div className="text-center text-muted-foreground py-10 col-span-2">
+                <p>You've redeemed all available items!</p>
+                <Button variant="link" asChild><Link href="/profile/vouchers">Check your voucher pocket</Link></Button>
+            </div>
+        )}
       </div>
     </AppShell>
   );

@@ -15,14 +15,14 @@ import { Separator } from '@/components/ui/separator';
 import { VictionLogo } from '@/components/icons/viction-logo';
 import { TokenIcon } from '@/components/icons/token-icon';
 import { useApp } from '@/hooks/use-app';
-import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2 } from 'lucide-react';
+import { Award, Wallet, WalletCards, ArrowUpRight, ArrowDownLeft, Copy, Loader2, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from '@/components/qr-code';
 
 
 // NOTE: This is your actual deployed $ECLB token contract address
-const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7fB1d172b67010d603';
+const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603';
 const VICTION_TESTNET_CHAIN_ID = '0x59'; // 89 in hex for Viction Testnet
 
 // Minimal ABI to get the token balance, decimals, and send tokens
@@ -229,6 +229,12 @@ export default function ProfilePage() {
             <Progress value={currentXp} className="h-2 w-48" />
           </div>
         </div>
+        
+        <Button asChild variant="outline" className="w-full">
+            <Link href="/profile/vouchers">
+                <Ticket className="mr-2 h-4 w-4"/> My Vouchers
+            </Link>
+        </Button>
 
         <Separator />
 
