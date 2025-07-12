@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { MapPin, ImagePlus, Globe, Lock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 let initialPosts: any[] = [
@@ -312,96 +313,98 @@ export default function CommunityPage() {
             </div>
 
             <Dialog open={isCreateModalOpen} onOpenChange={(isOpen) => !isOpen && resetCreateModal()}>
-                <DialogContent>
+                <DialogContent className="max-h-[90svh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle>Create a New Post</DialogTitle>
                         <DialogDescription>Share your latest adventure, thoughts, or media.</DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <Textarea 
-                            placeholder="What's on your mind?" 
-                            value={newPostContent}
-                            onChange={(e) => setNewPostContent(e.target.value)}
-                            className="min-h-[100px]"
-                        />
-
-                        {newPostMedia && (
-                            <div className="relative">
-                                {newPostMedia.type === 'image' && <Image src={newPostMedia.url} alt="Preview" width={200} height={200} className="rounded-md w-full max-h-64 object-cover" />}
-                                {newPostMedia.type === 'video' && <video src={newPostMedia.url} controls className="rounded-md w-full max-h-64" />}
-                                <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => setNewPostMedia(null)}>
-                                    <Trash2 className="h-4 w-4"/>
-                                </Button>
-                            </div>
-                        )}
-                        
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Tag a location (optional)"
-                                value={newPostLocation}
-                                onChange={(e) => setNewPostLocation(e.target.value)}
-                                className="pl-9"
+                    <ScrollArea className="flex-1 -mx-6">
+                        <div className="space-y-4 py-4 px-6">
+                            <Textarea 
+                                placeholder="What's on your mind?" 
+                                value={newPostContent}
+                                onChange={(e) => setNewPostContent(e.target.value)}
+                                className="min-h-[100px]"
                             />
-                        </div>
 
-                        {newPostMedia && (
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Album (Optional)</Label>
-                                    <div className="flex gap-2">
-                                        <Button variant={albumSelectionMode === 'new' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('new')} className="flex-1">
-                                            Create New
-                                        </Button>
-                                        <Button variant={albumSelectionMode === 'existing' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('existing')} className="flex-1" disabled={existingAlbumNames.length === 0}>
-                                            Use Existing
-                                        </Button>
-                                    </div>
+                            {newPostMedia && (
+                                <div className="relative">
+                                    {newPostMedia.type === 'image' && <Image src={newPostMedia.url} alt="Preview" width={200} height={200} className="rounded-md w-full max-h-64 object-cover" />}
+                                    {newPostMedia.type === 'video' && <video src={newPostMedia.url} controls className="rounded-md w-full max-h-64" />}
+                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => setNewPostMedia(null)}>
+                                        <Trash2 className="h-4 w-4"/>
+                                    </Button>
                                 </div>
-
-                                {albumSelectionMode === 'new' && (
-                                     <Input 
-                                        placeholder="Enter new album name..."
-                                        value={newAlbumName}
-                                        onChange={(e) => setNewAlbumName(e.target.value)}
-                                    />
-                                )}
-
-                                {albumSelectionMode === 'existing' && (
-                                     <Select onValueChange={setSelectedAlbum} value={selectedAlbum}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select an existing album" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {existingAlbumNames.map(name => (
-                                                <SelectItem key={name} value={name}>{name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            </div>
-                        )}
-                         
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" style={{ display: 'none' }} />
-                                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                    <ImagePlus className="mr-2"/> Add Media
-                                </Button>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Switch 
-                                    id="visibility-switch" 
-                                    checked={newPostVisibility === 'Public'} 
-                                    onCheckedChange={(checked) => setNewPostVisibility(checked ? 'Public' : 'Private')} 
+                            )}
+                            
+                            <div className="relative">
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Tag a location (optional)"
+                                    value={newPostLocation}
+                                    onChange={(e) => setNewPostLocation(e.target.value)}
+                                    className="pl-9"
                                 />
-                                <Label htmlFor="visibility-switch" className="flex items-center gap-1.5">
-                                    {newPostVisibility === 'Public' ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                                    {newPostVisibility}
-                                </Label>
+                            </div>
+
+                            {newPostMedia && (
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>Album (Optional)</Label>
+                                        <div className="flex gap-2">
+                                            <Button variant={albumSelectionMode === 'new' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('new')} className="flex-1">
+                                                Create New
+                                            </Button>
+                                            <Button variant={albumSelectionMode === 'existing' ? 'default' : 'outline'} onClick={() => setAlbumSelectionMode('existing')} className="flex-1" disabled={existingAlbumNames.length === 0}>
+                                                Use Existing
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {albumSelectionMode === 'new' && (
+                                        <Input 
+                                            placeholder="Enter new album name..."
+                                            value={newAlbumName}
+                                            onChange={(e) => setNewAlbumName(e.target.value)}
+                                        />
+                                    )}
+
+                                    {albumSelectionMode === 'existing' && (
+                                        <Select onValueChange={setSelectedAlbum} value={selectedAlbum}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select an existing album" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {existingAlbumNames.map(name => (
+                                                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" style={{ display: 'none' }} />
+                                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                        <ImagePlus className="mr-2"/> Add Media
+                                    </Button>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Switch 
+                                        id="visibility-switch" 
+                                        checked={newPostVisibility === 'Public'} 
+                                        onCheckedChange={(checked) => setNewPostVisibility(checked ? 'Public' : 'Private')} 
+                                    />
+                                    <Label htmlFor="visibility-switch" className="flex items-center gap-1.5">
+                                        {newPostVisibility === 'Public' ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                                        {newPostVisibility}
+                                    </Label>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </ScrollArea>
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button variant="ghost">Cancel</Button>
