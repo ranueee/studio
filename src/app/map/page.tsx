@@ -119,7 +119,7 @@ export default function MapPage() {
           if (mapRef.current) {
             mapRef.current.flyTo({
               center: [longitude, latitude],
-              zoom: isInitialLoad ? 15 : mapRef.current.getZoom(),
+              zoom: 15,
               duration: 1000,
               essential: true,
             });
@@ -316,5 +316,3 @@ export default function MapPage() {
     </AppShell>
   );
 }
-
-    
