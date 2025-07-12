@@ -10,9 +10,9 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
 export function MapboxMap() {
   const [viewState, setViewState] = useState({
-    longitude: -74.5,
-    latitude: 40,
-    zoom: 9
+    longitude: 120.2315,
+    latitude: 16.0217,
+    zoom: 10
   });
 
   if (!MAPBOX_TOKEN) {
@@ -42,7 +42,7 @@ export function MapboxMap() {
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         {/* You can add markers here */}
-        <Marker longitude={-74.5} latitude={40} anchor="bottom" />
+        <Marker longitude={120.2315} latitude={16.0217} anchor="bottom" />
       </Map>
     </div>
   );
