@@ -54,7 +54,7 @@ let initialPosts = [
     },
     {
         id: 3,
-        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/600x400.png' },
+        user: { name: 'Explorer Cathy', avatar: 'https://placehold.co/40x40.png' },
         image: 'https://placehold.co/600x400.png',
         imageHint: 'philippines cave water',
         caption: 'Took a dip in the Enchanted Cave.',
@@ -112,6 +112,7 @@ export default function AlbumDetailPage() {
 
     const fetchAlbumData = () => {
         setLoading(true);
+        // In a real app, this data would be fetched. We are sorting by most recent first.
         const albumPosts = initialPosts.filter(p => p.locationId === albumId).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
         
         setPosts(albumPosts);
@@ -142,7 +143,9 @@ export default function AlbumDetailPage() {
     }
 
     const handleDeletePost = (postId: number) => {
+        // Simulate deleting from the "database"
         initialPosts = initialPosts.filter(p => p.id !== postId);
+        // Update the state to re-render
         setPosts(posts.filter(p => p.id !== postId));
         toast({
             title: "Post Deleted",
@@ -159,11 +162,13 @@ export default function AlbumDetailPage() {
     const handleEditPost = () => {
         if (!editingPost) return;
 
+        // Simulate updating the "database"
         const postIndex = initialPosts.findIndex(p => p.id === editingPost.id);
         if (postIndex > -1) {
             initialPosts[postIndex].caption = editedCaption;
         }
 
+        // Update state to re-render
         setPosts(posts.map(p => p.id === editingPost.id ? { ...p, caption: editedCaption } : p));
         
         setEditModalOpen(false);
@@ -349,5 +354,3 @@ export default function AlbumDetailPage() {
         </AppShell>
     );
 }
-
-    

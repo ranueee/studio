@@ -20,7 +20,7 @@ export function BottomNav() {
   return (
     <nav className="grid grid-cols-5 items-center p-2 bg-background/80 backdrop-blur-sm border-t">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname.startsWith(item.href);
         return (
           <Link href={item.href} key={item.href} className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors">
             <item.icon className={cn('w-6 h-6', isActive && 'text-primary')} />
