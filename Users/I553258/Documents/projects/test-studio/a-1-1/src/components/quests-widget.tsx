@@ -82,12 +82,12 @@ const QuestItem = ({ quest }: { quest: Quest }) => {
 export const QuestsWidget = () => {
     const { quests } = useApp();
 
-    const dailyQuests = quests.filter(q => q.category === 'daily');
-    const weeklyQuests = quests.filter(q => q.category === 'weekly');
-    const monthlyQuests = quests.filter(q => q.category === 'monthly');
+    const dailyQuests = (quests || []).filter(q => q.category === 'daily');
+    const weeklyQuests = (quests || []).filter(q => q.category === 'weekly');
+    const monthlyQuests = (quests || []).filter(q => q.category === 'monthly');
 
     const availableQuestsCount = useMemo(() => {
-        return quests.filter(q => q.isCompleted && !q.isClaimed).length;
+        return (quests || []).filter(q => q.isCompleted && !q.isClaimed).length;
     }, [quests]);
     
     return (
