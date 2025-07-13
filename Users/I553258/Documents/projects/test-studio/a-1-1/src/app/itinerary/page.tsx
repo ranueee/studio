@@ -147,22 +147,22 @@ export default function ItineraryPage() {
 
                                 <div className="relative pl-6 space-y-4 border-l-2 border-primary/20">
                                     {day.activities.map((activity, index) => (
-                                        <div key={index} className="relative">
+                                        <div key={index} className="relative pb-4">
                                             <div className="absolute -left-[35px] top-1.5 h-4 w-4 bg-primary rounded-full" />
                                             <p className="font-semibold text-primary">{activity.time}</p>
                                             <p className="font-medium text-foreground">{activity.description}</p>
+                                            
+                                            {activity.transportation && (
+                                                <div className="mt-2 bg-primary/5 p-3 rounded-lg flex gap-3">
+                                                    <Bus className="w-5 h-5 text-primary/80 shrink-0 mt-0.5"/>
+                                                    <p className="text-sm text-muted-foreground">{activity.transportation}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
 
                                 <div className="mt-6 space-y-4">
-                                    {day.transportation && (
-                                        <div className="bg-primary/10 p-4 rounded-lg">
-                                            <p className="font-bold flex items-center gap-2 mb-2"><Bus className="w-5 h-5"/> How to Get There</p>
-                                            <p className="text-muted-foreground pl-7">{day.transportation}</p>
-                                        </div>
-                                    )}
-
                                     {day.accommodation && (
                                         <div className="bg-primary/10 p-4 rounded-lg">
                                             <p className="font-bold flex items-center gap-2 mb-2"><BedDouble className="w-5 h-5"/> Accommodation</p>

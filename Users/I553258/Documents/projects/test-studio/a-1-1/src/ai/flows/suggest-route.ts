@@ -24,6 +24,7 @@ export type SuggestOptimalEcoRouteInput = z.infer<typeof SuggestOptimalEcoRouteI
 const ActivitySchema = z.object({
     time: z.string().describe('The estimated time for the activity (e.g., "9:00 AM - 11:00 AM", "1:00 PM").'),
     description: z.string().describe('A description of the activity or destination.'),
+    transportation: z.string().describe('Meticulous, step-by-step information on how to get to this specific destination. Include landmarks, modes of transportation (bus, jeep, tricycle), estimated travel time and cost, drop-off points, and walking directions from there. Add tips like busy hours or safety reminders.'),
 });
 
 const MealSchema = z.object({
@@ -41,10 +42,9 @@ const DiningPlanSchema = z.object({
 const ItineraryDaySchema = z.object({
     day: z.number().describe('The day number of the itinerary (e.g., 1, 2, 3).'),
     title: z.string().describe('A catchy title for the day\'s activities (e.g., "Coastal Wonders & Sunset").'),
-    activities: z.array(ActivitySchema).describe('A list of activities and destinations for the day, each with a timestamp, in a logical sequence.'),
+    activities: z.array(ActivitySchema).describe('A list of activities and destinations for the day, each with a timestamp and detailed transportation instructions, in a logical sequence.'),
     accommodation: z.string().optional().describe('A specific recommendation for where to stay overnight.'),
     dining: DiningPlanSchema.describe('A detailed dining plan for the day, including breakfast, lunch, and dinner recommendations.'),
-    transportation: z.string().describe('A recommendation for transportation for the day\'s activities (e.g., "Rent a tricycle for the day for around ₱800-₱1000 to easily get between spots in Bolinao.").'),
 });
 
 const SuggestOptimalEcoRouteOutputSchema = z.object({
@@ -83,7 +83,14 @@ Create a comprehensive, multi-day itinerary that is perfectly tailored to the us
     -   Arrange activities in a geographically logical order to minimize travel time. For example, group activities in Bolinao and Anda together.
     -   For each day, provide a list of activities. Be descriptive (e.g., "Island hopping tour at Hundred Islands, visit Governor's Island viewpoint").
     -   **Crucially, assign a specific timestamp or time range to every activity** (e.g., "9:00 AM - 11:00 AM", "1:00 PM").
-4.  **Recommend Transportation:** For each day, provide a practical transportation recommendation. For example: "Rent a tricycle for the day (around ₱800-₱1200) to easily get between spots in Bolinao." or "Take a Victory Liner bus from Cubao to Alaminos, then hire a tricycle to the port." This should be appropriate for the day's plan and budget.
+4.  **Recommend Transportation (Per Activity):** For **EACH** activity, provide meticulous, step-by-step directions in the 'transportation' field. This must include:
+    -   Clear directions from the previous activity's location.
+    -   Available modes of transportation (e.g., "Take a tricycle", "Ride a Partas bus", "Book a Grab").
+    -   Landmarks to look out for.
+    -   Estimated travel time and cost (e.g., "15-20 minutes, ~₱100-₱150").
+    -   Specific drop-off points and walking directions from there.
+    -   Helpful tips like busy hours, safety reminders, or alternative routes.
+    -   Example: "From Patar Beach, walk to the main road and hail a tricycle. Ask to be dropped off at Enchanted Cave. The ride takes about 10-15 minutes and costs around ₱80. The entrance will be on your right, marked by a large sign."
 5.  **Recommend Accommodation:** Based on the itinerary's location for the night and the user's budget, suggest a specific place to stay (e.g., "Sundowners Vacation Villas in Bolinao"). Provide one recommendation per day where an overnight stay is implied.
 6.  **Detail Meal Plans:** For each day, create a detailed dining plan for breakfast, lunch, and dinner.
     -   Provide a specific time for each meal (e.g., "7:30 AM", "12:30 PM", "7:00 PM").
@@ -92,7 +99,7 @@ Create a comprehensive, multi-day itinerary that is perfectly tailored to the us
 7.  **Estimate Budget:** Provide a realistic estimated cost range for the entire trip (per person), considering accommodation, food, tours, and entrance fees, aligned with the user's specified budget. Express this as a string like "₱X,XXX - ₱Y,YYY per person".
 8.  **Create Title & Summary:** Write a catchy title for the whole trip and a short summary paragraph that gets the user excited.
 
-Generate a complete response that strictly follows the output schema. Ensure every activity has a time, the dining plan is detailed for all three meals where applicable, and transportation advice is provided for each day.
+Generate a complete response that strictly follows the output schema. Ensure every activity has a time and detailed transportation instructions.
   `,
 });
 
