@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -10,10 +11,15 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { suggestOptimalEcoRoute, type SuggestOptimalEcoRouteOutput } from '@/ai/flows/suggest-route';
-import { Loader, Wand2, Route, Trees, CheckCircle, MapPin, BedDouble, Utensils, PiggyBank, CalendarDays, Clock, Coffee, Sun, Moon, Sparkles, ShieldCheck } from 'lucide-react';
+import { Loader, Wand2, Route, Trees, CheckCircle, MapPin, BedDouble, Utensils, PiggyBank, CalendarDays, Clock, Coffee, Sun, Moon, Sparkles, ShieldCheck, Check, Info } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useApp } from '@/hooks/use-app';
+import { TokenIcon } from '@/components/icons/token-icon';
+import { useToast } from '@/hooks/use-toast';
+import type { Quest } from '@/contexts/app-context';
+import { cn } from '@/lib/utils';
 
 const ItineraryPlanner = () => {
     const [interests, setInterests] = useState('');
@@ -206,40 +212,116 @@ const ItineraryPlanner = () => {
     );
 }
 
-const QuestsList = () => {
-    const { visitedPois } = useApp();
-    // Simplified list of quests for now. In a real app, this would come from a dynamic source.
-    const allQuests = [
-        { id: 'hundred-islands-quest', title: 'Collect 1 bag of trash', location: 'Hundred Islands', reward: '100 XP, 25 $ECLB', completed: false },
-        { id: 'patar-beach-quest', title: 'Spot 3 native birds', location: 'Patar Beach', reward: '60 XP, 15 $ECLB', completed: false },
-        { id: 'bolinao-falls-quest', title: 'Take a plastic-free picnic', location: 'Bolinao Falls', reward: '70 XP, 18 $ECLB', completed: false },
-        { id: 'cape-bolinao-quest', title: 'Learn about its history', location: 'Cape Bolinao', reward: '50 XP, 12 $ECLB', completed: false },
-        { id: 'enchanted-cave-quest', title: 'Photo documentation of cave formations', location: 'Enchanted Cave', reward: '80 XP, 20 $ECLB', completed: false }
-    ];
+const QuestCard = ({ quest }: { quest: Quest }) => {
+    const { claimQuestReward } = useApp();
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const handleClaim = () => {
+        if (quest.isCompleted && !quest.isClaimed) {
+            claimQuestReward(quest.id);
+            toast({
+                title: 'Reward Claimed!',
+                description: `You've earned ${quest.reward} $ECLB tokens.`,
+            });
+        }
+    };
+
+    const handleGoTo = () => {
+        if(quest.link) {
+            router.push(quest.link)
+        }
+    }
+
+    const buttonDisabled = !quest.isCompleted || quest.isClaimed;
 
     return (
-        <div className="space-y-4">
-            <p className="text-muted-foreground">Complete Eco-Challenges at various tourist spots to earn rewards and contribute to conservation efforts.</p>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Available Quests</CardTitle>
-                    <CardDescription>Visit locations on the map to start these quests.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {allQuests.map(quest => (
-                        <div key={quest.id} className="flex items-center gap-4 p-3 bg-secondary/50 rounded-lg">
-                            <ShieldCheck className="w-8 h-8 text-primary" />
-                            <div className="flex-1">
-                                <p className="font-semibold">{quest.title}</p>
-                                <p className="text-sm text-muted-foreground">{quest.location}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-bold text-primary text-sm">{quest.reward}</p>
+        <Accordion type="single" collapsible className="w-full bg-secondary/30 rounded-lg">
+            <AccordionItem value={quest.id} className="border-b-0">
+                <AccordionTrigger className="hover:no-underline p-4">
+                    <div className="flex items-center gap-4 flex-1">
+                        <div className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center",
+                            quest.isClaimed ? "bg-muted text-muted-foreground" : quest.isCompleted ? "bg-green-500 text-white" : "bg-primary/20 text-primary"
+                        )}>
+                            <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 text-left">
+                            <p className="font-semibold">{quest.title}</p>
+                            <div className="flex items-center gap-1 text-primary">
+                                <TokenIcon className="w-4 h-4" />
+                                <span className="font-bold text-sm">+{quest.reward} Tokens</span>
                             </div>
                         </div>
-                    ))}
-                </CardContent>
-            </Card>
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full border-2">
+                           {quest.isClaimed && <Check className="w-4 h-4 text-muted-foreground" />}
+                           {quest.isCompleted && !quest.isClaimed && <Check className="w-4 h-4 text-green-500" />}
+                        </div>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                    <div className="pl-12 space-y-4">
+                        <p className="text-muted-foreground text-sm">{quest.description}</p>
+                        {quest.isClaimed ? (
+                             <Button variant="outline" disabled className="w-full">
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Already Claimed
+                            </Button>
+                        ) : (
+                           quest.isCompleted ? (
+                             <Button onClick={handleClaim} className="w-full">Claim Reward</Button>
+                           ) : (
+                            quest.link ? (
+                                <Button variant="outline" onClick={handleGoTo} className="w-full">Go to Task</Button>
+                            ) : (
+                                <Button variant="outline" disabled className="w-full">In Progress</Button>
+                            )
+                           )
+                        )}
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+    );
+};
+
+const QuestsList = () => {
+    const { quests } = useApp();
+
+    const dailyQuests = quests.filter(q => q.category === 'daily');
+    const weeklyQuests = quests.filter(q => q.category === 'weekly');
+    const monthlyQuests = quests.filter(q => q.category === 'monthly');
+
+    return (
+        <div className="space-y-6">
+            <p className="text-muted-foreground">Complete quests to earn token rewards. New quests appear periodically, so check back often!</p>
+            
+            <div className="space-y-4">
+                <h3 className="text-xl font-bold">Daily Quests</h3>
+                {dailyQuests.length > 0 ? (
+                    dailyQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
+                ) : (
+                    <p className="text-sm text-muted-foreground">No daily quests available.</p>
+                )}
+            </div>
+            
+            <div className="space-y-4">
+                <h3 className="text-xl font-bold">Weekly Quests</h3>
+                {weeklyQuests.length > 0 ? (
+                    weeklyQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
+                ) : (
+                     <p className="text-sm text-muted-foreground">No weekly quests available.</p>
+                )}
+            </div>
+
+             <div className="space-y-4">
+                <h3 className="text-xl font-bold">Monthly Quests</h3>
+                {monthlyQuests.length > 0 ? (
+                    monthlyQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
+                ) : (
+                    <p className="text-sm text-muted-foreground">No monthly quests available.</p>
+                )}
+            </div>
         </div>
     );
 };
