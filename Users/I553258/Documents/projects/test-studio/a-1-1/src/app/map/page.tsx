@@ -8,12 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
-import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, History, Sprout, Utensils, Sailboat, Anchor } from 'lucide-react';
+import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, History, Sprout, Utensils, Sailboat, Anchor, Trophy } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
 import Map, { Marker, type MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
-import { QuestsWidget } from '@/components/quests-widget';
 
 const pois = [
   // Bolinao
@@ -217,7 +216,10 @@ export default function MapPage() {
             })}
         </Map>
         <div className="absolute top-4 right-4 z-10">
-            <QuestsWidget />
+            <Button variant="secondary" className="shadow-lg">
+                <Trophy className="mr-2 h-4 w-4" />
+                Quests
+            </Button>
         </div>
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_20%,rgba(0,0,0,0.8)_30%)]" />
       </div>
@@ -296,3 +298,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
