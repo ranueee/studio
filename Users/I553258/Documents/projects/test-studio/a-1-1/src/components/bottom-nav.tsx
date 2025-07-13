@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/map', label: 'Map', icon: Map },
-  { href: '/quests', label: 'Itinerary', icon: Luggage },
+  { href: '/quests', label: 'Quests', icon: Luggage },
   { href: '/community', label: 'Community', icon: Users },
   { href: '/marketplace', label: 'Marketplace', icon: Store },
   { href: '/profile', label: 'Profile', icon: User },
@@ -31,5 +31,3 @@ export function BottomNav() {
     </nav>
   );
 }
-
-    
