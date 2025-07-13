@@ -21,8 +21,9 @@ export function TopBar() {
         data-ai-hint="profile picture"
       />
       <div className="flex-1">
-        <div className="flex justify-end items-center mb-1">
-          <span className="text-xs text-muted-foreground">{xp % 100}/{xpForNextLevel} XP</span>
+        <div className="flex justify-between items-center mb-1">
+          <p className="font-semibold text-sm">Lvl {level}</p>
+          <span className="text-xs text-muted-foreground">{currentXp}/{xpForNextLevel} XP</span>
         </div>
         <Progress value={currentXp} className="h-2" />
       </div>
