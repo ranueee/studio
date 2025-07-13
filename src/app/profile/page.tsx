@@ -152,7 +152,7 @@ export default function ProfilePage() {
         await fetchAllBalances(newProvider, account);
         toast({
             title: "Wallet Connected",
-            description: "Your Viction wallet has been successfully connected.",
+            description: "Your Metamas wallet has been successfully connected.",
         });
       }
     } catch (error) {

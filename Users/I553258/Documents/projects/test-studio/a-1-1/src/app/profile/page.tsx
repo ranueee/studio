@@ -193,48 +193,61 @@ export default function ProfilePage() {
   };
 
   const handleSend = async () => {
-      if (!recipientAddress || !sendAmount || !walletAddress) {
-          toast({ variant: 'destructive', title: 'Error', description: 'Please fill in all fields.' });
-          return;
-      }
-      if (!ethers.isAddress(recipientAddress)) {
-          toast({ variant: 'destructive', title: 'Invalid Address', description: 'The recipient address is not a valid Ethereum address.' });
-          return;
-      }
+    if (!recipientAddress || !sendAmount || !walletAddress) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill in all fields.' });
+        return;
+    }
+    if (!ethers.isAddress(recipientAddress)) {
+        toast({ variant: 'destructive', title: 'Invalid Address', description: 'The recipient address is not a valid Ethereum address.' });
+        return;
+    }
 
-      setIsSending(true);
+    setIsSending(true);
+    
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, signer);
       
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const tokenContract = new ethers.Contract(ECLB_TOKEN_CONTRACT_ADDRESS, erc20Abi, signer);
-        
-        const decimals = await tokenContract.decimals();
-        const amountToSend = ethers.parseUnits(sendAmount, decimals);
+      const decimals = await tokenContract.decimals();
+      const amountToSend = ethers.parseUnits(sendAmount, decimals);
 
-        const tx = await tokenContract.transfer(recipientAddress, amountToSend);
-        
-        toast({
-            title: "Transaction Sent",
-            description: "Your $ECLB transaction is being processed.",
-        });
+      const balance = await tokenContract.balanceOf(walletAddress);
 
-        setTimeout(() => handleRefresh(), 3000); 
-
-        setSendModalOpen(false);
-        setRecipientAddress('');
-        setSendAmount('');
-
-      } catch (error: any) {
-        console.error("Transaction failed", error);
+      if (balance < amountToSend) {
         toast({
             variant: 'destructive',
-            title: 'Transaction Failed',
-            description: error?.reason || "An error occurred during the transaction.",
+            title: 'Insufficient Funds',
+            description: 'You do not have enough $ECLB to make this transaction.',
         });
-      } finally {
         setIsSending(false);
+        return;
       }
+      
+      const tx = await tokenContract.transfer(recipientAddress, amountToSend);
+      
+      toast({
+          title: "Transaction Sent",
+          description: "Your $ECLB transaction is being processed.",
+      });
+
+      // Wait a moment for the transaction to likely be mined before refreshing
+      setTimeout(() => handleRefresh(), 5000); 
+
+      setSendModalOpen(false);
+      setRecipientAddress('');
+      setSendAmount('');
+
+    } catch (error: any) {
+      console.error("Transaction failed", error);
+      toast({
+          variant: 'destructive',
+          title: 'Transaction Failed',
+          description: error?.reason || "An error occurred during the transaction.",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
 
