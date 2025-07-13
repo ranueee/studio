@@ -3,13 +3,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map, Route, Users, Shield, Store, User } from 'lucide-react';
+import { Map, Route, Users, Trophy, Store, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/map', label: 'Map', icon: Map },
   { href: '/itinerary', label: 'Itinerary', icon: Route },
-  { href: '/quests', label: 'Quests', icon: Shield },
+  { href: '/quests', label: 'Quests', icon: Trophy },
   { href: '/community', label: 'Community', icon: Users },
   { href: '/marketplace', label: 'Marketplace', icon: Store },
   { href: '/profile', label: 'Profile', icon: User },

@@ -13,6 +13,7 @@ import { TokenIcon } from '@/components/icons/token-icon';
 import Map, { Marker, type MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
+import { QuestsWidget } from '@/components/quests-widget';
 
 const pois = [
   // Bolinao
@@ -215,6 +216,9 @@ export default function MapPage() {
                 );
             })}
         </Map>
+        <div className="absolute top-4 right-4 z-10">
+            <QuestsWidget />
+        </div>
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_20%,rgba(0,0,0,0.8)_30%)]" />
       </div>
 
@@ -292,5 +296,3 @@ export default function MapPage() {
     </AppShell>
   );
 }
-
-    
