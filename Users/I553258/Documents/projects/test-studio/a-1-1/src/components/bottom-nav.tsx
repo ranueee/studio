@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/map', label: 'Map', icon: Map },
-  { href: '/quests', label: 'Quests', icon: Shield },
   { href: '/itinerary', label: 'Itinerary', icon: Route },
+  { href: '/quests', label: 'Quests', icon: Shield },
   { href: '/community', label: 'Community', icon: Users },
   { href: '/marketplace', label: 'Marketplace', icon: Store },
   { href: '/profile', label: 'Profile', icon: User },
