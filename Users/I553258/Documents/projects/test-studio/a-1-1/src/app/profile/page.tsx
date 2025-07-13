@@ -239,12 +239,20 @@ export default function ProfilePage() {
       setSendAmount('');
 
     } catch (error: any) {
-      console.error("Transaction failed", error);
-      toast({
-          variant: 'destructive',
-          title: 'Transaction Failed',
-          description: error?.reason || "An error occurred during the transaction.",
-      });
+        if (error.code === 'UNSUPPORTED_OPERATION' && error.message.includes('ENS')) {
+             toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: "The network doesn't support ENS names. Please use a valid address.",
+            });
+        } else {
+            console.error("Transaction failed", error);
+            toast({
+                variant: 'destructive',
+                title: 'Transaction Failed',
+                description: error?.reason || "An error occurred during the transaction.",
+            });
+        }
     } finally {
       setIsSending(false);
     }
