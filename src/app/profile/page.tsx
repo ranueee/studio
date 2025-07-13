@@ -22,7 +22,7 @@ import { QRCodeSVG } from '@/components/qr-code';
 import { cn } from '@/lib/utils';
 
 
-const ECLB_TOKEN_CONTRACT_ADDRESS = '0xA432D2c5586c3Ec18d741c7B1d172b67010d603'; // Your $ECLB token
+const ECLB_TOKEN_CONTRACT_ADDRESS = '0x94658158Fa9de6273926850f0221b195778969Be'; // Your $ECLB token
 const VICTION_TESTNET_CHAIN_ID = '0x59'; // 89 in hex for Viction Testnet
 
 const TOKEN_CONTRACTS = [

@@ -1,10 +1,9 @@
 
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" {...props}>
@@ -15,17 +14,31 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  let backgroundImageUrl = 'https://placehold.co/800x1200.png';
+  let imageHint = 'philippines island';
+
+  try {
+    const result = await generateImage({ prompt: 'A serene, breathtaking ecotourism spot in the Philippines, perfect for a travel app background' });
+    backgroundImageUrl = result.imageUrl;
+    imageHint = 'philippines island landscape';
+  } catch (error) {
+    console.error("Failed to generate background image, using placeholder.", error);
+    // The default placeholder will be used.
+  }
+
   return (
     <main className="app-container !max-w-full">
       <div className="relative w-full h-full flex flex-col">
         <Image
-          src="https://placehold.co/800x1200.png"
-          alt="Hundred Islands National Park"
+          src={backgroundImageUrl}
+          alt="A serene travel destination in the Philippines"
           layout="fill"
           objectFit="cover"
           className="z-0"
-          data-ai-hint="philippines island"
+          data-ai-hint={imageHint}
+          unoptimized // Required for data URIs from the AI flow
+          priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
         <div className="relative z-20 flex flex-col justify-end items-center h-full text-center p-8 text-white">
@@ -46,5 +59,3 @@ export default function OnboardingPage() {
     </main>
   );
 }
-
-    
