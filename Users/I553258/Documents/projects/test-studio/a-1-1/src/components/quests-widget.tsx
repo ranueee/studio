@@ -37,7 +37,7 @@ const QuestItem = ({ quest }: { quest: Quest }) => {
 
     return (
         <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value={quest.id} className="border-b">
+            <AccordionItem value={quest.id} className="border-b-0">
                 <AccordionTrigger className="hover:no-underline text-sm p-3">
                     <div className="flex items-center gap-3 flex-1">
                         {quest.isClaimed ? (
