@@ -296,3 +296,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
