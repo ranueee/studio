@@ -3,12 +3,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map, Luggage, Store, User, Users } from 'lucide-react';
+import { Map, Shield, Route, Store, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/map', label: 'Map', icon: Map },
-  { href: '/quests', label: 'Quests', icon: Luggage },
+  { href: '/quests', label: 'Quests', icon: Shield },
+  { href: '/itinerary', label: 'Itinerary', icon: Route },
   { href: '/community', label: 'Community', icon: Users },
   { href: '/marketplace', label: 'Marketplace', icon: Store },
   { href: '/profile', label: 'Profile', icon: User },
@@ -18,7 +19,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="grid grid-cols-5 items-center p-2 bg-background/80 backdrop-blur-sm border-t">
+    <nav className="grid grid-cols-6 items-center p-2 bg-background/80 backdrop-blur-sm border-t">
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href);
         return (
