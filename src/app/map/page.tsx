@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useApp } from '@/hooks/use-app';
-import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, History, Sprout, Utensils, Sailboat, Anchor } from 'lucide-react';
+import { Star, Check, Award, MapPin, Waves, HelpCircle, Droplets, Building, History, Sprout, Utensils, Sailboat, Anchor, Trophy } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/token-icon';
 import Map, { Marker, type MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
+import { QuestsWidget } from '@/components/quests-widget';
 
 const pois = [
   // Bolinao
@@ -120,12 +121,11 @@ export default function MapPage() {
             
             setUserLocation(newLocation);
             
-            // This locks the map view to the user's location
             setViewState(currentViewState => ({
                 ...currentViewState,
                 longitude: longitude,
                 latitude: latitude,
-                zoom: currentViewState.zoom < 14 ? 14 : currentViewState.zoom // Zoom in if not already zoomed
+                zoom: currentViewState.zoom < 14 ? 14 : currentViewState.zoom
             }));
         },
         (error) => {
@@ -183,10 +183,11 @@ export default function MapPage() {
     <AppShell>
       <div className="relative w-full h-full bg-black">
         {!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ? (
-            <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200 rounded-lg">
-                <div className="max-w-md">
+            <div className="flex items-center justify-center h-full text-center p-4 bg-red-900/20 text-red-200">
+                <div className="max-w-md space-y-2">
                     <h2 className="font-bold text-lg text-white">Map Configuration Error</h2>
-                    <p className="mt-2 text-sm">Could not load Mapbox. Please add your access token to the `.env` file.</p>
+                    <p className="text-sm">The Mapbox access token is missing. Please add it to your environment variables to display the map.</p>
+                    <p className="text-xs text-red-300">Create a `.env` file and add: <br/><code className="bg-black/50 p-1 rounded-sm">NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN='your_token_here'</code></p>
                 </div>
             </div>
         ) : (
@@ -224,6 +225,9 @@ export default function MapPage() {
                 })}
             </Map>
         )}
+        <div className="absolute top-4 right-4 z-10">
+          <QuestsWidget />
+        </div>
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_20%,rgba(0,0,0,0.8)_30%)]" />
       </div>
 
@@ -301,3 +305,5 @@ export default function MapPage() {
     </AppShell>
   );
 }
+
+    
