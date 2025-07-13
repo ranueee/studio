@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map, Shield, Route, Store, User, Users } from 'lucide-react';
+import { Map, Route, Users, Shield, Store, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
