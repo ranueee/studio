@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { suggestOptimalEcoRoute, type SuggestOptimalEcoRouteOutput } from '@/ai/flows/suggest-route';
-import { Loader, Wand2, Route, Trees, BedDouble, Utensils, PiggyBank, CalendarDays, Coffee, Sun, Moon } from 'lucide-react';
+import { Loader, Wand2, Route, Trees, BedDouble, Utensils, PiggyBank, CalendarDays, Coffee, Sun, Moon, Bus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 export default function ItineraryPage() {
@@ -156,6 +156,13 @@ export default function ItineraryPage() {
                                 </div>
 
                                 <div className="mt-6 space-y-4">
+                                    {day.transportation && (
+                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                            <p className="font-bold flex items-center gap-2 mb-2"><Bus className="w-5 h-5"/> How to Get There</p>
+                                            <p className="text-muted-foreground pl-7">{day.transportation}</p>
+                                        </div>
+                                    )}
+
                                     {day.accommodation && (
                                         <div className="bg-primary/10 p-4 rounded-lg">
                                             <p className="font-bold flex items-center gap-2 mb-2"><BedDouble className="w-5 h-5"/> Accommodation</p>
